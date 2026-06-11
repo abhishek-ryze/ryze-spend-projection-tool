@@ -8,7 +8,7 @@ export default function Home() {
       <RyzeNavbar />
 
       <main className="bg-ink" style={{ position: "relative", zIndex: 2 }}>
-        {/* Hero — cosmos gradient with ambient glow */}
+        {/* Hero: cosmos gradient with ambient glow */}
         <section
           className="relative isolate overflow-hidden flex flex-col items-center justify-center text-center px-6 pt-40 md:pt-52 pb-20 md:pb-28 min-h-[58vh] md:min-h-[66vh]"
           style={{ background: "linear-gradient(160deg, #2E0440 0%, #020846 45%, #000000 100%)" }}
@@ -29,7 +29,7 @@ export default function Home() {
           />
 
           <div className="relative z-[2] mx-auto max-w-4xl">
-            <span className="eyebrow mb-5 block">GTM Spend Projection</span>
+            <span className="eyebrow-block mb-5">GTM Spend Projection</span>
 
             <h1 className="text-title text-title-sky" style={{ fontSize: "clamp(2.5rem, 7vw, 6rem)", lineHeight: 0.98 }}>
               Project your sales &amp;<br />
@@ -38,35 +38,22 @@ export default function Home() {
             </h1>
 
             <p
-              className="mx-auto mt-6 mb-10 max-w-[54ch]"
-              style={{ fontFamily: "var(--font-sans)", fontSize: "clamp(1rem, 1.5vw, 1.125rem)", color: "rgba(255,255,255,0.62)", lineHeight: 1.7 }}
+              className="mx-auto mt-6 mb-14 md:mb-16 max-w-[54ch]"
+              style={{ fontFamily: "var(--font-sans)", fontSize: "clamp(1rem, 1.5vw, 1.125rem)", color: "rgba(255,255,255,0.66)", lineHeight: 1.7 }}
             >
-              Allocate spend across any channel and watch it turn into customers, CAC, MRR and ROI —
-              projected over 12 months. Built for founders sizing up their go-to-market before they commit the budget.
+              Answer a few questions about your spend and customers. We work out your real CAC,
+              project the next 12 months, and show you exactly where your next dollar should go.
             </p>
 
-            <div className="flex flex-wrap gap-3 justify-center items-center">
-              <a href="#tool" className="btn-electric">Open the model</a>
+            <div className="flex flex-wrap gap-3 justify-center items-center" style={{ marginTop: "clamp(40px, 5vw, 64px)" }}>
+              <a href="#tool" className="btn-electric">Find where to spend</a>
               <div
                 className="flex items-center gap-2 rounded-pill text-sm"
                 style={{ fontFamily: "var(--font-sans)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.04)", padding: "10px 18px" }}
               >
-                <span className="rounded-pill" style={{ width: 8, height: 8, background: "#22c55e", boxShadow: "0 0 6px #22c55e" }} />
-                Live calculations
+                <span className="rounded-pill" style={{ width: 8, height: 8, background: "#4D5CFF", boxShadow: "0 0 6px #4D5CFF" }} />
+                Takes 2 minutes
               </div>
-            </div>
-
-            <div className="mt-14 md:mt-16 mx-auto grid grid-cols-3 gap-4 md:gap-8 max-w-lg">
-              {[
-                { value: "12-mo", label: "Projection horizon" },
-                { value: "Any", label: "Editable channels" },
-                { value: "Live", label: "CAC · LTV · ROI" },
-              ].map(s => (
-                <div key={s.label}>
-                  <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.4rem, 4vw, 2.1rem)", fontWeight: 700, color: "var(--paper)", lineHeight: 1 }}>{s.value}</p>
-                  <p style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "rgba(255,255,255,0.42)", marginTop: 6 }}>{s.label}</p>
-                </div>
-              ))}
             </div>
           </div>
         </section>

@@ -35,13 +35,8 @@ export default function RyzeFooter() {
 /* Top layer — CTA + marquee bundled so the swoosh anchors to the marquee's bottom edge */
 function FooterCurtain() {
   return (
-    <div className="bg-ink" style={{ position: "relative", zIndex: 2, overflowX: "clip" }}>
-      <img
-        src="/cta-swoosh.svg"
-        alt=""
-        aria-hidden
-        style={{ position: "absolute", left: 0, bottom: 0, width: "100%", maxWidth: 1200, height: "auto", zIndex: 0, pointerEvents: "none" }}
-      />
+    <div className="bg-ink" style={{ position: "relative", zIndex: 2, overflow: "clip" }}>
+      <img src="/cta-swoosh.svg" alt="" aria-hidden className="footer-swoosh" />
 
       <section className="footer-cta">
         <h2>

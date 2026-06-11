@@ -60,7 +60,7 @@ input { font-family: inherit; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
+  padding: 8px 14px 6px;
   border-radius: var(--r-pill);
   background: rgba(185, 61, 245, 0.10);
   border: 1px solid rgba(185, 61, 245, 0.25);
@@ -70,6 +70,7 @@ input { font-family: inherit; }
   font-size: var(--text-xs);
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  line-height: 1;
 }
 .eyebrow-block::before {
   content: "";
@@ -210,6 +211,7 @@ input { font-family: inherit; }
 
 .marquee-band {
   position: relative;
+  z-index: 2;
   height: 126px;
   overflow: hidden;
   display: flex;
@@ -393,6 +395,26 @@ input { font-family: inherit; }
     height: 100px;
     align-self: flex-start;
     margin-top: 24px;
+  }
+}
+
+/* ---------- Footer swoosh — left-anchored, peaks above the marquee band ---------- */
+.footer-swoosh {
+  position: absolute;
+  left: -40px;
+  bottom: 0;
+  transform: translateY(130px); /* push the bottom of the arc behind the marquee */
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+  z-index: 0;
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .footer-swoosh {
+    transform: translateY(50px); /* show more of the arc on mobile (narrower viewport) */
+    max-width: 100%;
+    left: -20px;
   }
 }
 
