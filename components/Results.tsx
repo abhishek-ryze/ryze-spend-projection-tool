@@ -2,7 +2,7 @@
 import { useState } from "react";
 import NumberField from "@/components/ui/NumberField";
 import {
-  Card, ChannelEditor, Kpi, BRAND, BRAND_BRIGHT, PURPLE, WARN,
+  Card, ChannelEditor, Kpi, BRAND_BRIGHT, SUPPORT, PURPLE, WARN,
   SURFACE, SURFACE_BORDER, DIVIDER, purpleShade, ltvColor, roiColor, paybackColor,
 } from "@/components/tool-ui";
 import {
@@ -66,7 +66,7 @@ export default function Results({
       <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
         <Kpi label="Blended CAC" value={fmtMoney(results.blendedCac)} sub={`${fmt(results.newCustomersPerMonth)} customers / mo`} />
         <Kpi label="LTV : CAC" value={fmtRatio(results.ltvCac)} sub={results.ltvCac >= 3 ? "Healthy" : results.ltvCac >= 1 ? "Workable" : "Underwater"} accent={ltvColor(results.ltvCac)} />
-        <Kpi label="Ending MRR (mo 12)" value={fmtMoney(results.endingMrr)} sub={`${fmtMoney(results.arr)} ARR`} accent={BRAND} highlight />
+        <Kpi label="Ending MRR (mo 12)" value={fmtMoney(results.endingMrr)} sub={`${fmtMoney(results.arr)} ARR`} accent={SUPPORT} highlight />
         <Kpi label="12-mo ROI" value={fmtPct(results.roi, 0)} sub={results.breakEvenMonth > 0 ? `Break-even mo ${results.breakEvenMonth}` : "No break-even in 12 mo"} accent={roiColor(results.roi)} />
       </div>
 
@@ -129,7 +129,7 @@ function WhereToSpend({ results }: { results: ProjectionResult }) {
             const isBest = i === 0;
             const isWorst = i === n - 1 && n > 1;
             const tag = isBest ? "Most efficient" : isWorst ? "Least efficient" : "";
-            const tagColor = isBest ? BRAND_BRIGHT : isWorst ? WARN : "rgba(255,255,255,0.5)";
+            const tagColor = isBest ? SUPPORT : isWorst ? WARN : "rgba(255,255,255,0.5)";
             return (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 18px", borderRadius: 14, border: SURFACE_BORDER, background: SURFACE }}>
                 <span className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, color: purpleShade(n > 1 ? i / (n - 1) : 0), width: 22 }}>{String(i + 1).padStart(2, "0")}</span>
@@ -142,7 +142,7 @@ function WhereToSpend({ results }: { results: ProjectionResult }) {
                   <p style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>CAC</p>
                 </div>
                 <div style={{ textAlign: "right", minWidth: 64 }}>
-                  <p className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: BRAND_BRIGHT }}>{fmtRatio(c.returnMultiple)}</p>
+                  <p className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: SUPPORT }}>{fmtRatio(c.returnMultiple)}</p>
                   <p style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>return</p>
                 </div>
               </div>
@@ -253,7 +253,7 @@ function Insights({ results }: { results: ProjectionResult }) {
   });
 
   insights.push({
-    n: "03", color: BRAND, title: "12-month outcome",
+    n: "03", color: SUPPORT, title: "12-month outcome",
     body: `You spend ${fmtMoney(results.total12Spend)} over the year to reach ${fmtMoney(results.endingMrr)} MRR (${fmtMoney(results.arr)} ARR). ${results.breakEvenMonth > 0 ? `Cumulative revenue overtakes spend in month ${results.breakEvenMonth}.` : `Revenue does not overtake spend within 12 months.`}`,
   });
 

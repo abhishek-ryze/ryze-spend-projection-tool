@@ -31,7 +31,7 @@ export default function Home() {
           <div className="relative z-[2] mx-auto max-w-4xl">
             <span className="eyebrow-block mb-5">GTM Spend Projection</span>
 
-            <h1 className="text-title text-title-sky" style={{ fontSize: "clamp(2.5rem, 7vw, 6rem)", lineHeight: 0.98 }}>
+            <h1 className="text-title text-title-sky" style={{ fontSize: "clamp(2.5rem, 7vw, 6rem)", lineHeight: 1.08, paddingBottom: 4 }}>
               Project your sales &amp;<br />
               marketing{" "}
               <em className="text-accent" style={{ whiteSpace: "nowrap" }}>returns.</em>
@@ -51,7 +51,7 @@ export default function Home() {
                 className="flex items-center gap-2 rounded-pill text-sm"
                 style={{ fontFamily: "var(--font-sans)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.04)", padding: "10px 18px" }}
               >
-                <span className="rounded-pill" style={{ width: 8, height: 8, background: "#4D5CFF", boxShadow: "0 0 6px #4D5CFF" }} />
+                <span className="rounded-pill" style={{ width: 8, height: 8, background: "#898BFF", boxShadow: "0 0 6px #898BFF" }} />
                 Takes 2 minutes
               </div>
             </div>

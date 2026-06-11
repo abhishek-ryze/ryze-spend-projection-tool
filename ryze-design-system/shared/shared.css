@@ -58,6 +58,7 @@ input { font-family: inherit; }
 /* ---------- Eyebrow block (canonical) ---------- */
 .eyebrow-block {
   display: inline-flex;
+  align-self: flex-start; /* hug content instead of stretching in a flex column */
   align-items: center;
   gap: 8px;
   padding: 8px 14px 6px;

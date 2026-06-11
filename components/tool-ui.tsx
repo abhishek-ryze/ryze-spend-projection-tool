@@ -6,8 +6,9 @@ import { Channel, seedCustomers, benchmarkFor, fmtMoney } from "@/lib/calculatio
    Monotone palette. Blue is the brand (CTA, active, positive); purple shades
    are the only data-viz accent; one muted warning tone for genuinely bad states.
 --------------------------------------------------------------------------- */
-export const BRAND = "#001AFF";        // electric blue
+export const BRAND = "#001AFF";        // electric blue — CTA / active / fills
 export const BRAND_BRIGHT = "#4D5CFF"; // brighter blue (chart stroke / hover)
+export const SUPPORT = "#898BFF";      // readable periwinkle blue for supporting text on dark/grey
 export const PURPLE = "#B93DF5";       // lavender/purple — data accent
 export const PURPLE_SOFT = "#DEBAFB";
 export const WARN = "#F95823";         // muted ember — bad states only
@@ -16,9 +17,9 @@ export const SURFACE = "rgba(255,255,255,0.045)";
 export const SURFACE_BORDER = "1px solid rgba(255,255,255,0.09)";
 export const DIVIDER = "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.14) 50%, transparent 100%)";
 
-export const ltvColor = (r: number) => (r >= 3 ? BRAND : r >= 1 ? PURPLE : WARN);
-export const roiColor = (r: number) => (r >= 0 ? BRAND : WARN);
-export const paybackColor = (m: number) => (m > 0 && m <= 12 ? BRAND : WARN);
+export const ltvColor = (r: number) => (r >= 3 ? SUPPORT : r >= 1 ? PURPLE : WARN);
+export const roiColor = (r: number) => (r >= 0 ? SUPPORT : WARN);
+export const paybackColor = (m: number) => (m > 0 && m <= 12 ? SUPPORT : WARN);
 
 // Strong -> soft purple by normalized position (0 = strongest).
 export function purpleShade(t: number): string {
@@ -31,31 +32,67 @@ export function purpleShade(t: number): string {
 /* ---------------------------------------------------------------------------
    Card shell (locked Ryze pattern)
 --------------------------------------------------------------------------- */
-export function Card({ eyebrow, titleA, accent, action, children }: {
-  eyebrow: string; titleA: string; accent: string; action?: React.ReactNode; children: React.ReactNode;
+export function Card({ eyebrow, titleA, accent, action, collapsible, open = true, onToggle, children }: {
+  eyebrow: string; titleA: string; accent: string; action?: React.ReactNode;
+  collapsible?: boolean; open?: boolean; onToggle?: () => void; children: React.ReactNode;
 }) {
+  const clickable = collapsible && !!onToggle;
   return (
     <div
       className="bg-ink-soft rounded-xl ring-1-white-10"
       style={{ padding: "clamp(24px, 4vw, 40px)", display: "flex", flexDirection: "column", gap: 28, minWidth: 0 }}
     >
-      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <header
+        onClick={clickable ? onToggle : undefined}
+        style={{
+          display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
+          cursor: clickable ? "pointer" : "default", userSelect: clickable ? "none" : "auto",
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <span className="eyebrow-block">{eyebrow}</span>
           <h2
-            className="font-display text-paper"
-            style={{ fontSize: "clamp(24px, 2.6vw, 32px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2 }}
+            className="font-display"
+            style={{
+              fontSize: "clamp(24px, 2.6vw, 32px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.3, paddingBottom: 2,
+              background: "linear-gradient(0deg, #DEBAFB 0%, #FFFFFF 100%)",
+              WebkitBackgroundClip: "text", backgroundClip: "text",
+              color: "transparent", WebkitTextFillColor: "transparent",
+            }}
           >
             {titleA}{" "}
-            <em className="font-serif text-lavender" style={{ fontStyle: "italic", fontWeight: 400, whiteSpace: "nowrap" }}>
+            <em
+              className="font-serif"
+              style={{ fontStyle: "italic", fontWeight: 400, whiteSpace: "nowrap", color: "var(--lavender)", WebkitTextFillColor: "var(--lavender)" }}
+            >
               {accent}
             </em>
           </h2>
         </div>
-        {action}
+        {collapsible ? <Chevron open={open} /> : action}
       </header>
-      {children}
+      {(!collapsible || open) && children}
     </div>
+  );
+}
+
+function Chevron({ open }: { open?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      style={{
+        display: "grid", placeItems: "center", width: 36, height: 36, borderRadius: 999, flexShrink: 0,
+        border: "1px solid rgba(255,255,255,0.16)", background: "rgba(255,255,255,0.05)",
+      }}
+    >
+      <svg
+        viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.75)"
+        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform var(--dur-base) var(--ease-out)" }}
+      >
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </span>
   );
 }
 
@@ -155,7 +192,7 @@ export function ChannelEditor({ channel, mode, onChange, onRemove }: {
           <strong className="tabular" style={{ color: "var(--paper)", fontWeight: 600 }}>{channel.customers > 0 ? fmtMoney(cac) : "n/a"}</strong>
         </span>
         {vs > 0 && (
-          <span style={{ color: vs <= 1 ? BRAND_BRIGHT : WARN }}>
+          <span style={{ color: vs <= 1 ? SUPPORT : WARN }}>
             {vs <= 1 ? `${Math.round((1 - vs) * 100)}% below benchmark` : `${Math.round((vs - 1) * 100)}% above benchmark`}
           </span>
         )}
