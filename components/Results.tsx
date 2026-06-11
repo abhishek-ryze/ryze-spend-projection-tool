@@ -185,7 +185,7 @@ function ProjectionChart({ results }: { results: ProjectionResult }) {
             cursor={{ stroke: "rgba(255,255,255,0.2)" }}
             contentStyle={{ background: "#15151d", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 12, fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--paper)" }}
             labelStyle={{ color: "rgba(255,255,255,0.6)", marginBottom: 4 }}
-            formatter={(v: number | string) => [fmtMoney(Number(v)), "MRR"]}
+            formatter={(v) => [fmtMoney(Number(v ?? 0)), "MRR"]}
           />
           <Area type="monotone" dataKey="mrr" stroke={BRAND_BRIGHT} strokeWidth={2.5} fill="url(#mrrFill)" />
         </AreaChart>
