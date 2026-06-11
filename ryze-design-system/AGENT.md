@@ -20,9 +20,10 @@ You are building a UI using the **Ryze Design System** — an Awwwards-grade aes
 
 ## Non-negotiable rules
 
-0. **Drop `<RyzeNavbar />` at the top of every page and `<RyzeFooter />` at the bottom.** They're in `COMPONENTS.md §1a/1b` and `§11` — pixel-perfect against ryzedesigns.com. Do not re-build either from primitives, do not split them, do not wrap them in your own layout containers. If you need a variant (e.g. dark navbar on light page), tell the user that's out of the design system and ask before drifting.
-0a. **The footer is `position: fixed; bottom: 0; z-index: 1`. `<main>` must be `relative z-[2] bg-ink` and wrap everything above the footer. `body { padding-bottom: 776px; scrollbar-gutter: stable; }` is mandatory.** Without these, the scroll-reveal effect breaks and the menu-open shifts the navbar CTA.
-0b. **Use the binary assets shipped with the skill — don't re-draw them.** The chrome R (`/ryze-mark.png`), Nav lockup (`/nav-ryze.svg`), CTA swoosh (`/cta-swoosh.svg`), marquee noise (`/marquee-pattern.png`), and Lottie loop (`./ryze-footer-loop.json`) are copies of the source-of-truth. Re-tracing them produces visibly wrong results.
+0. **The shared bundle is the source of truth.** `<RyzeNavbar />`, `<RyzeFooter />`, `<MegaMenu />`, `<HeroParticles />`, `icons.tsx`, and `<NumberField />` are installed under `components/ryze/` and `components/ui/`. **Import them — never rebuild them, never inline-style their internals, never tweak icon sizes per-project.** If a real change is needed, push it back into the skill's `shared/` so every future project inherits it. `COMPONENTS.md` recipes exist for *new* patterns, not for re-deriving locked primitives.
+0a. **The footer is `position: fixed; bottom: 0; z-index: 1`. `<main>` must be `<main className="bg-ink" style={{ position: "relative", zIndex: 2 }}>`** and wrap everything above the footer. `body { padding-bottom: 776px; scrollbar-gutter: stable; }` lives in `shared/shared.css` and is auto-disabled below 1100px. Without the `<main>` z-index, the scroll-reveal breaks.
+0b. **Use the binary assets shipped with the skill — don't re-draw them.** The chrome R (`/ryze-mark.png`), Nav lockup (`/nav-ryze.svg`), CTA swoosh (`/cta-swoosh.svg`), marquee noise (`/marquee-pattern.png`), and Lottie loop (`./ryze-footer-loop.json`, sits next to `RyzeFooter.tsx`) are the canonical source files. Re-tracing them produces visibly wrong results.
+0c. **Locked sizes & spacings — don't change inline.** Footer social icons = `<Icon size={32} />`. Megamenu social icons = `<Icon size={28} />`. Navbar logo = 44px (42px below 720px). Vertical gap between stacked cards in a column = **24px**. Section padding = `clamp(96px, 10vw, 140px) clamp(24px, 5vw, 64px)`. Card padding = 40–48px (large) / 24–28px (compact). Card-internal `gap` between header + body + footer = 24–36px. If you reach for a different number, stop and use the canonical one.
 1. **Instrument Serif is the primary heading font.** Every page H1 / hero title uses `.text-title` (Instrument Serif Regular + warm cream→white vertical gradient clipped to text). Schibsted Grotesk is the **secondary** display, used for section H2s and UI display only. Never default an H1 to Schibsted.
 2. **Pill-first for chips and tags, soft rectangles for buttons.** Chips, nav-pills, tags, badges, and decorative pills use `rounded-pill` (9999px). Primary CTAs (`btn-electric`) and nav buttons use `rounded-sm` (the soft rectangle Book-a-Call style). Cards use `rounded-xl` (32px). Never sharp corners.
 3. **No shadows on buttons.** `.btn-electric` and `.btn-secondary` carry zero shadow — hover is `translateY(-1px)` only. Reserve `shadow-glow-electric` for decorative accents (imagery hover, eyebrow dots). Drop shadows live on light-mode cards (`shadow-card-lift`) only.
@@ -87,16 +88,86 @@ You are building a UI using the **Ryze Design System** — an Awwwards-grade aes
 | "A tag / category label" | `<span class="chip">…</span>` |
 | "An input field with hint" | Use `NumberField` or equivalent — label uppercase tracked smoke, hint text `color: #b3b3b3`, pill-rounded border |
 
+## Card spec (locked — copy verbatim)
+
+Every dark-mode card in a Ryze tool follows the exact same shell:
+
+```tsx
+<div
+  className="bg-ink-soft rounded-xl ring-1-white-10"
+  style={{
+    padding: 48,                          // 40 for compact, 48 for headline cards
+    display: "flex",
+    flexDirection: "column",
+    gap: 36,                              // 24 if the card holds a single block
+  }}
+>
+  <header style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <span className="eyebrow-block">YOUR INPUTS</span>
+    <h2
+      className="font-display text-paper"
+      style={{
+        fontSize: "clamp(26px, 2.6vw, 34px)",
+        fontWeight: 700,
+        letterSpacing: "-0.02em",
+        lineHeight: 1.2,
+      }}
+    >
+      Type anything,{" "}
+      <em
+        className="font-serif text-lavender"
+        style={{ fontStyle: "italic", fontWeight: 400, whiteSpace: "nowrap" }}
+      >
+        the dashboard
+      </em>{" "}
+      moves.
+    </h2>
+  </header>
+  {/* …body… */}
+</div>
+```
+
+**Rules:**
+- Card shell **always** `bg-ink-soft rounded-xl ring-1-white-10`. `border-radius: var(--r-xl)` = 32px.
+- Card padding: **48px** (headline / hero cards), **40px** (standard), **24–28px** (compact / stat cards inside a `.stat-grid`).
+- Card-internal `gap`: **36px** when header + form + footer, **24px** when single block.
+- Vertical gap **between** stacked cards in a column: **24px**.
+- Header pattern is always `<span className="eyebrow-block">LABEL</span>` (the pill-rounded lavender block with a dot prefix — see `shared.css`) + `font-display` H2 with `clamp(26px, 2.6vw, 34px)` + `lineHeight: 1.2` + italic-serif accent. No other eyebrow style.
+- Body text inside cards: `text-smoke` for secondary, `text-paper` for primary. Hint text under inputs: `#b3b3b3`.
+- Internal dividers inside a card: 1px gradient line:
+  ```css
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+  ```
+
+## Eyebrow rules
+
+There are **two** eyebrow variants — pick by context, don't invent a third:
+
+| Variant | Use | Markup |
+|---|---|---|
+| **Pill block** (default for cards & sections) | Above any card H2 or section H2 — the lavender pill with the glowing dot prefix | `<span className="eyebrow-block">YOUR INPUTS</span>` |
+| **Numbered eyebrow** | Inside a card to label an *optional* / *secondary* block (e.g. "05 / OPTIONAL") | `<span className="font-mono text-electric-bright" style={{ fontSize: 12, letterSpacing: "0.1em" }}>05 / OPTIONAL</span>` |
+
+Eyebrow text is always **UPPERCASE** with tracked letter-spacing. Never use sentence case.
+
 ## Project setup checklist
 
 When scaffolding a new project for the Ryze aesthetic:
 
-1. Copy `tokens.css` (or `tailwind.config.js`) into the project.
-2. Add the font `<link>` from `tokens.css` top (Schibsted Grotesk + Inter + Instrument Serif + Mohave).
-3. Set `body { background: var(--ink); color: var(--paper); font-family: var(--font-sans); }`.
-4. Build sections by composing recipes from `COMPONENTS.md` — don't write components from scratch.
-5. Alternate section background mood (dark → light → dark) for cinematic pacing.
-6. Audit the page against the §11 "Do / Don't" table in `COMPONENTS.md` before shipping.
+1. Copy `ryze-design-system/` into the project (includes `shared/`).
+2. Copy `shared/components/*` → `components/ryze/` (incl. `ryze-footer-loop.json`).
+3. Copy `shared/ui/NumberField.tsx` → `components/ui/`.
+4. Copy `ryze-mark.png`, `nav-ryze.svg`, `cta-swoosh.svg`, `marquee-pattern.png` → `public/`.
+5. In `globals.css`, the first two imports are:
+   ```css
+   @import "../ryze-design-system/tokens.css";
+   @import "../ryze-design-system/shared/shared.css";
+   ```
+6. `npm install lottie-web`.
+7. Every page: `<RyzeNavbar />` → `<main className="bg-ink" style={{ position:"relative", zIndex:2 }}>…</main>` → `<RyzeFooter />`.
+8. Build sections by composing recipes from `COMPONENTS.md` — the shared bundle is non-negotiable, but the rest is composable.
+9. Alternate section background mood (dark → light → dark) for cinematic pacing.
+10. Audit the page against the §11 "Do / Don't" table in `COMPONENTS.md` before shipping.
 
 ## If you're tempted to deviate
 

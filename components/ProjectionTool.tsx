@@ -1,624 +1,490 @@
 "use client";
 import { useState, useCallback } from "react";
+import NumberField from "@/components/ui/NumberField";
 import {
-  Assumptions, Scenario, PRESETS, calculate, fmt, fmtPct,
+  Model, Scenario, Channel, ProjectionResult,
+  clonePreset, newChannel, calculate,
+  fmt, fmtMoney, fmtPct, fmtRatio,
 } from "@/lib/calculations";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 
-const SCENARIO_META = {
-  bear: { label: "Bear", color: "#F95823", desc: "Conservative — low list quality, minimal engagement" },
-  base: { label: "Base", color: "#001AFF", desc: "Realistic median across industry benchmarks" },
-  bull: { label: "Bull", color: "#B93DF5", desc: "Optimistic — strong execution, warm audiences" },
+const SCENARIO_META: Record<Scenario, { label: string; color: string; desc: string }> = {
+  bear:  { label: "Bear",  color: "#F95823", desc: "Conservative — expensive leads, soft conversion, higher churn." },
+  base:  { label: "Base",  color: "#001AFF", desc: "Realistic median across typical early-stage GTM benchmarks." },
+  bull:  { label: "Bull",  color: "#B93DF5", desc: "Optimistic — efficient acquisition, strong retention, fast scaling." },
 };
 
-const GOAL = 100;
+const CHANNEL_COLORS = ["#001AFF", "#B93DF5", "#F3BD1A", "#F95823", "#EE3DF5", "#898BFF", "#22c55e"];
+const colorFor = (i: number) => CHANNEL_COLORS[i % CHANNEL_COLORS.length];
+
+const DIVIDER = "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)";
 
 export default function ProjectionTool() {
   const [scenario, setScenario] = useState<Scenario>("base");
-  const [assumptions, setAssumptions] = useState<Assumptions>(PRESETS.base);
+  const [model, setModel] = useState<Model>(() => clonePreset("base"));
   const [customized, setCustomized] = useState(false);
 
-  const results = calculate(assumptions);
+  const results = calculate(model);
 
-  const applyPreset = (s: Scenario) => {
+  const applyScenario = (s: Scenario) => {
     setScenario(s);
-    setAssumptions(PRESETS[s]);
+    setModel(clonePreset(s));
     setCustomized(false);
   };
 
-  const updateField = useCallback(
-    <K extends keyof Assumptions>(channel: K, field: keyof Assumptions[K], value: number) => {
-      setAssumptions(prev => ({
-        ...prev,
-        [channel]: { ...prev[channel], [field]: value },
-      }));
-      setCustomized(true);
-    },
-    []
-  );
+  const updateGlobal = useCallback((field: keyof Model["global"], value: number) => {
+    setModel(prev => ({ ...prev, global: { ...prev.global, [field]: value } }));
+    setCustomized(true);
+  }, []);
 
-  const chartData = [
-    { name: "Warm Email", signups: results.channels.warmEmail.signups, color: "#F3BD1A" },
-    { name: "Cold Email",  signups: results.channels.coldEmail.signups,  color: "#898BFF" },
-    { name: "LinkedIn",   signups: results.channels.linkedin.signups,   color: "#001AFF" },
-    { name: "Community",  signups: results.channels.community.signups,  color: "#B93DF5" },
-    { name: "Partners",   signups: results.channels.partnership.signups, color: "#EE3DF5" },
-    { name: "Referrals",  signups: results.channels.referral.signups,   color: "#F95823" },
-  ];
+  const updateChannel = useCallback((id: string, patch: Partial<Channel>) => {
+    setModel(prev => ({
+      ...prev,
+      channels: prev.channels.map(c => (c.id === id ? { ...c, ...patch } : c)),
+    }));
+    setCustomized(true);
+  }, []);
 
-  const goalPct = Math.min(results.vsGoal * 100, 200);
-  const onTrack = results.totalSignups >= GOAL;
+  const addChannel = useCallback(() => {
+    setModel(prev => ({ ...prev, channels: [...prev.channels, newChannel()] }));
+    setCustomized(true);
+  }, []);
+
+  const removeChannel = useCallback((id: string) => {
+    setModel(prev => ({ ...prev, channels: prev.channels.filter(c => c.id !== id) }));
+    setCustomized(true);
+  }, []);
 
   return (
-    <section id="tool" style={{ background: "var(--ink)" }} className="py-16 md:py-24 px-4 md:px-8">
-      <div className="mx-auto max-w-7xl">
+    <section id="tool" style={{ background: "var(--ink)" }} className="px-4 md:px-8" >
+      <div
+        className="mx-auto"
+        style={{ maxWidth: 1180, paddingBlock: "clamp(64px, 9vw, 120px)", display: "flex", flexDirection: "column", gap: 24 }}
+      >
 
-        {/* Scenario Selector */}
-        <div className="mb-12 md:mb-16">
-          <span className="eyebrow mb-4 block">Scenario Presets</span>
-          <div className="flex flex-wrap gap-3 mb-6">
-            {(["bear", "base", "bull"] as Scenario[]).map(s => (
-              <button
-                key={s}
-                onClick={() => applyPreset(s)}
-                className="relative px-6 py-3 rounded-lg font-semibold tracking-[-0.01em] transition-all duration-300 border"
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 16,
-                  background: scenario === s && !customized
-                    ? SCENARIO_META[s].color
-                    : "rgba(255,255,255,0.04)",
-                  color: scenario === s && !customized ? "#fff" : "rgba(255,255,255,0.6)",
-                  borderColor: scenario === s && !customized
-                    ? SCENARIO_META[s].color
-                    : "rgba(255,255,255,0.12)",
-                  boxShadow: scenario === s && !customized
-                    ? `0 0 20px ${SCENARIO_META[s].color}44`
-                    : "none",
-                }}
-              >
-                {SCENARIO_META[s].label}
-              </button>
-            ))}
+        {/* ---- Scenario selector ---------------------------------------- */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <span className="eyebrow-block">Scenario</span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+            {(Object.keys(SCENARIO_META) as Scenario[]).map(s => {
+              const active = scenario === s && !customized;
+              return (
+                <button
+                  key={s}
+                  onClick={() => applyScenario(s)}
+                  className="rounded-pill"
+                  style={{
+                    fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600,
+                    padding: "10px 22px", cursor: "pointer",
+                    transition: "all var(--dur-base) var(--ease-out)",
+                    background: active ? SCENARIO_META[s].color : "rgba(255,255,255,0.04)",
+                    color: active ? "#fff" : "rgba(255,255,255,0.65)",
+                    border: `1px solid ${active ? SCENARIO_META[s].color : "rgba(255,255,255,0.14)"}`,
+                    boxShadow: active ? `0 0 24px ${SCENARIO_META[s].color}55` : "none",
+                  }}
+                >
+                  {SCENARIO_META[s].label}
+                </button>
+              );
+            })}
             {customized && (
               <span
-                className="px-5 py-3 rounded-lg border text-sm"
+                className="rounded-pill"
                 style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: 14,
-                  color: "var(--sun)",
-                  borderColor: "rgba(243,189,26,0.3)",
-                  background: "rgba(243,189,26,0.06)",
+                  fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600, padding: "8px 18px",
+                  color: "var(--sun)", border: "1px solid rgba(243,189,26,0.35)", background: "rgba(243,189,26,0.08)",
                 }}
               >
                 Custom
               </span>
             )}
           </div>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontFamily: "var(--font-sans)", fontSize: 14 }}>
-            {customized ? "You have custom assumptions applied." : SCENARIO_META[scenario].desc}
+          <p style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "rgba(255,255,255,0.5)" }}>
+            {customized ? "Your edited assumptions are applied. Pick a scenario to reset." : SCENARIO_META[scenario].desc}
           </p>
         </div>
 
-        {/* Key Metrics Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12 md:mb-16">
-          <MetricCard
-            label="Total Signups (30 days)"
-            value={fmt(results.totalSignups)}
-            sub={`Goal: ${GOAL}`}
-            highlight={onTrack}
-            accent={onTrack ? "#B93DF5" : "#F95823"}
-          />
-          <MetricCard
-            label="Activated Users"
-            value={fmt(results.activated)}
-            sub={`${fmtPct(assumptions.funnel.activationRate)} activation`}
-            accent="#001AFF"
-          />
-          <MetricCard
-            label="Day-7 Retained"
-            value={fmt(results.d7)}
-            sub={`${fmtPct(assumptions.funnel.d7Retention)} of activated`}
-            accent="#898BFF"
-          />
-          <MetricCard
-            label="Day-30 Active"
-            value={fmt(results.d30)}
-            sub={`${fmtPct(assumptions.funnel.d30Retention)} of activated`}
-            accent="#F3BD1A"
-          />
-        </div>
+        {/* ---- KPI cards ------------------------------------------------- */}
+        <KpiRow results={results} />
 
-        {/* Goal Progress */}
-        <div className="mb-12 md:mb-16 p-5 md:p-6 rounded-xl border" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}>
-          <div className="flex items-center justify-between mb-3">
-            <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
-              Progress to 100 Signups Goal
-            </span>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: onTrack ? "#B93DF5" : "var(--paper)" }}>
-              {Math.round(results.vsGoal * 100)}%
-            </span>
+        {/* ---- 12-month projection chart -------------------------------- */}
+        <Card eyebrow="Projection" titleA="Twelve months," accent="of momentum" titleB="">
+          <ProjectionChart results={results} />
+        </Card>
+
+        {/* ---- Business model + Channels -------------------------------- */}
+        <Card eyebrow="Business Model" titleA="What a customer" accent="is worth" titleB="">
+          <div
+            style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}
+          >
+            <NumberField label="ARPU / month" value={model.global.arpu} prefix="$"
+              onChange={v => updateGlobal("arpu", v)} hint="Avg recurring revenue per customer." />
+            <NumberField label="Gross margin" value={model.global.grossMargin} suffix="%"
+              onChange={v => updateGlobal("grossMargin", v)} hint="Revenue left after cost to serve." />
+            <NumberField label="Monthly churn" value={model.global.churnRate} suffix="%"
+              onChange={v => updateGlobal("churnRate", v)} hint="Share of customers lost each month." />
+            <NumberField label="Spend growth / mo" value={model.global.spendGrowth} suffix="%"
+              onChange={v => updateGlobal("spendGrowth", v)} hint="How fast you scale budget." />
           </div>
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${Math.min(goalPct / 2, 100)}%`,
-                background: onTrack
-                  ? "linear-gradient(90deg, #001AFF, #B93DF5)"
-                  : "linear-gradient(90deg, #F95823, #F4256D)",
-                boxShadow: onTrack ? "0 0 12px rgba(0,26,255,0.5)" : "0 0 12px rgba(249,88,35,0.5)",
-              }}
-            />
-          </div>
-        </div>
+        </Card>
 
-        {/* Main two-column: Assumptions + Channel Results */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-16">
-          {/* Left: Assumptions */}
-          <div className="xl:col-span-2 space-y-4">
-            <span className="eyebrow mb-4 block">Channel Assumptions</span>
-
-            <ChannelCard
-              title="Warm Email" number="01"
-              description="Nico's past-client list"
-              signups={results.channels.warmEmail.signups}
-              accentColor="#F3BD1A"
-            >
-              <NumberInput label="List Size" value={assumptions.warmEmail.listSize} min={0} max={2000} step={10}
-                onChange={v => updateField("warmEmail", "listSize", v)} unit="contacts" />
-              <PercentInput label="Open Rate" value={assumptions.warmEmail.openRate}
-                onChange={v => updateField("warmEmail", "openRate", v)} />
-              <PercentInput label="Click-Through (of opens)" value={assumptions.warmEmail.ctr}
-                onChange={v => updateField("warmEmail", "ctr", v)} />
-              <PercentInput label="Signup Conv. (of clicks)" value={assumptions.warmEmail.signupConv}
-                onChange={v => updateField("warmEmail", "signupConv", v)} />
-            </ChannelCard>
-
-            <ChannelCard
-              title="Cold Email" number="02"
-              description="4,200 Seattle homeowners list"
-              signups={results.channels.coldEmail.signups}
-              accentColor="#898BFF"
-            >
-              <NumberInput label="List Size" value={assumptions.coldEmail.listSize} min={0} max={10000} step={100}
-                onChange={v => updateField("coldEmail", "listSize", v)} unit="contacts" />
-              <PercentInput label="Effective Delivery Rate" value={assumptions.coldEmail.deliveryRate}
-                onChange={v => updateField("coldEmail", "deliveryRate", v)} />
-              <PercentInput label="Open Rate" value={assumptions.coldEmail.openRate}
-                onChange={v => updateField("coldEmail", "openRate", v)} />
-              <PercentInput label="Click-Through (of opens)" value={assumptions.coldEmail.ctr}
-                onChange={v => updateField("coldEmail", "ctr", v)} max={0.20} />
-              <PercentInput label="Signup Conv. (of clicks)" value={assumptions.coldEmail.signupConv}
-                onChange={v => updateField("coldEmail", "signupConv", v)} />
-            </ChannelCard>
-
-            <ChannelCard
-              title="LinkedIn Organic" number="03"
-              description="4 founders posting for 30 days"
-              signups={results.channels.linkedin.signups}
-              accentColor="#001AFF"
-            >
-              <NumberInput label="Total Posts (team)" value={assumptions.linkedin.posts} min={0} max={60} step={1}
-                onChange={v => updateField("linkedin", "posts", v)} unit="posts" />
-              <NumberInput label="Avg Reach Per Post" value={assumptions.linkedin.avgReach} min={0} max={5000} step={50}
-                onChange={v => updateField("linkedin", "avgReach", v)} unit="people" />
-              <PercentInput label="CTR to Landing Page" value={assumptions.linkedin.ctr}
-                onChange={v => updateField("linkedin", "ctr", v)} max={0.10} />
-              <PercentInput label="Signup Conv. (of clicks)" value={assumptions.linkedin.signupConv}
-                onChange={v => updateField("linkedin", "signupConv", v)} />
-            </ChannelCard>
-
-            <ChannelCard
-              title="Community" number="04"
-              description="Reddit, FB Groups, Nextdoor, X"
-              signups={results.channels.community.signups}
-              accentColor="#B93DF5"
-            >
-              <NumberInput label="Posts Surviving Moderation" value={assumptions.community.postsSurviving} min={0} max={30} step={1}
-                onChange={v => updateField("community", "postsSurviving", v)} unit="posts" />
-              <NumberInput label="Avg Views Per Post" value={assumptions.community.avgViews} min={0} max={2000} step={10}
-                onChange={v => updateField("community", "avgViews", v)} unit="views" />
-              <PercentInput label="CTR to Landing" value={assumptions.community.ctr}
-                onChange={v => updateField("community", "ctr", v)} max={0.10} />
-              <PercentInput label="Signup Conv. (of clicks)" value={assumptions.community.signupConv}
-                onChange={v => updateField("community", "signupConv", v)} />
-            </ChannelCard>
-
-            <ChannelCard
-              title="Partnerships" number="05"
-              description="Agents and lenders co-promoting"
-              signups={results.channels.partnership.signups}
-              accentColor="#EE3DF5"
-            >
-              <NumberInput label="Partners Contacted" value={assumptions.partnership.partnersContacted} min={0} max={100} step={1}
-                onChange={v => updateField("partnership", "partnersContacted", v)} unit="partners" />
-              <PercentInput label="% Who Actively Co-Promote" value={assumptions.partnership.activeRate}
-                onChange={v => updateField("partnership", "activeRate", v)} />
-              <DecimalInput label="Signups Per Active Partner" value={assumptions.partnership.signupsPerPartner} min={0} max={20} step={0.5}
-                onChange={v => updateField("partnership", "signupsPerPartner", v)} unit="signups" />
-            </ChannelCard>
-
-            <ChannelCard
-              title="Referral / Viral" number="06"
-              description="K-factor applied to direct signups"
-              signups={results.channels.referral.signups}
-              accentColor="#F95823"
-            >
-              <PercentInput label="K-Factor (referrals per signup)" value={assumptions.referral.kFactor}
-                onChange={v => updateField("referral", "kFactor", v)} max={0.60} />
-              <div className="p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <p style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
-                  Applied to the subtotal of all direct channels. Andrew Chen consumer K-factor: 0.1 to 0.3 for non-viral but useful products in first month.
-                </p>
-              </div>
-            </ChannelCard>
-          </div>
-
-          {/* Right: Channel Breakdown + Funnel */}
-          <div className="space-y-4">
-            <span className="eyebrow mb-4 block">Channel Breakdown</span>
-
-            {/* Signup bars per channel */}
-            <div className="rounded-xl p-5 md:p-6 border space-y-3" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}>
-              {chartData.map(ch => {
-                const pct = results.totalSignups > 0 ? (ch.signups / results.totalSignups) * 100 : 0;
-                return (
-                  <div key={ch.name}>
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "rgba(255,255,255,0.70)" }}>{ch.name}</span>
-                      <span style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: "var(--paper)" }}>
-                        {fmt(ch.signups)}
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${pct}%`, background: ch.color }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div className="pt-3 mt-3 border-t flex justify-between items-center" style={{ borderColor: "rgba(255,255,255,0.10)" }}>
-                <span style={{ fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.50)" }}>Total</span>
-                <span style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, color: "var(--paper)" }}>{fmt(results.totalSignups)}</span>
-              </div>
-            </div>
-
-            {/* Funnel Assumptions */}
-            <div className="rounded-xl p-5 md:p-6 border" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}>
-              <span className="eyebrow mb-4 block" style={{ color: "var(--sun)" }}>Post-Signup Funnel</span>
-              <div className="space-y-4">
-                <PercentInput label="Activation Rate" value={assumptions.funnel.activationRate}
-                  onChange={v => updateField("funnel", "activationRate", v)} />
-                <PercentInput label="Day-7 Retention" value={assumptions.funnel.d7Retention}
-                  onChange={v => updateField("funnel", "d7Retention", v)} />
-                <PercentInput label="Day-30 Retention" value={assumptions.funnel.d30Retention}
-                  onChange={v => updateField("funnel", "d30Retention", v)} />
-              </div>
-            </div>
-
-            {/* Funnel waterfall */}
-            <div className="rounded-xl p-5 md:p-6 border" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}>
-              <span className="eyebrow mb-5 block">Funnel Stages</span>
-              <FunnelWaterfall
-                stages={[
-                  { label: "Signups", value: results.totalSignups, color: "#001AFF" },
-                  { label: "Activated", value: results.activated, color: "#898BFF" },
-                  { label: "Day-7", value: results.d7, color: "#B93DF5" },
-                  { label: "Day-30", value: results.d30, color: "#F3BD1A" },
-                ]}
+        <Card eyebrow="Channels" titleA="Where the" accent="budget goes" titleB="">
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {results.channels.length === 0 && (
+              <p style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "#b3b3b3" }}>
+                No channels yet. Add one to start projecting.
+              </p>
+            )}
+            {model.channels.map((ch, i) => (
+              <ChannelRow
+                key={ch.id}
+                channel={ch}
+                result={results.channels.find(r => r.id === ch.id)!}
+                color={colorFor(i)}
+                onChange={patch => updateChannel(ch.id, patch)}
+                onRemove={() => removeChannel(ch.id)}
               />
-            </div>
+            ))}
+            <button
+              onClick={addChannel}
+              className="rounded-pill"
+              style={{
+                alignSelf: "flex-start", marginTop: 4, cursor: "pointer",
+                fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 600, color: "var(--paper)",
+                padding: "11px 22px", background: "rgba(0,26,255,0.12)",
+                border: "1px solid rgba(0,26,255,0.5)",
+                transition: "all var(--dur-base) var(--ease-out)",
+              }}
+            >
+              + Add channel
+            </button>
           </div>
-        </div>
+        </Card>
 
-        {/* Bar Chart */}
-        <div className="mb-16 rounded-xl p-6 md:p-8 border" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}>
-          <span className="eyebrow mb-2 block">Signups by Channel</span>
-          <p style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "rgba(255,255,255,0.45)", marginBottom: 24 }}>
-            Projected signups from each channel under current assumptions
-          </p>
-          <div style={{ height: 260 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "var(--font-sans)" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11, fontFamily: "var(--font-sans)" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  cursor={{ fill: "rgba(255,255,255,0.04)" }}
-                  contentStyle={{
-                    background: "#1a1a1a",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    borderRadius: 10,
-                    fontFamily: "var(--font-sans)",
-                    fontSize: 13,
-                    color: "var(--paper)",
-                  }}
-                  formatter={(v) => [Math.round(Number(v ?? 0)), "Signups"]}
-                />
-                <Bar dataKey="signups" radius={[6, 6, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {/* ---- Channel breakdown ---------------------------------------- */}
+        <Card eyebrow="Breakdown" titleA="Customers &amp; CAC" accent="by channel" titleB="">
+          <ChannelBreakdown results={results} />
+        </Card>
 
-        {/* Verdict Section */}
-        <VerdictSection results={results} totalSignups={results.totalSignups} d30={results.d30} />
+        {/* ---- Insights ------------------------------------------------- */}
+        <Insights results={results} />
       </div>
     </section>
   );
 }
 
-function MetricCard({ label, value, sub, highlight, accent }: { label: string; value: string; sub: string; highlight?: boolean; accent: string }) {
+/* ------------------------------------------------------------------------- */
+/* Card shell                                                                */
+/* ------------------------------------------------------------------------- */
+function Card({ eyebrow, titleA, accent, titleB, children }: {
+  eyebrow: string; titleA: string; accent: string; titleB: string; children: React.ReactNode;
+}) {
   return (
     <div
-      className="p-5 md:p-6 rounded-xl border transition-all duration-300"
+      className="bg-ink-soft rounded-xl ring-1-white-10"
+      style={{ padding: "clamp(24px, 4vw, 40px)", display: "flex", flexDirection: "column", gap: 28, minWidth: 0 }}
+    >
+      <header style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <span className="eyebrow-block">{eyebrow}</span>
+        <h2
+          className="font-display text-paper"
+          style={{ fontSize: "clamp(24px, 2.6vw, 32px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2 }}
+        >
+          {titleA}{" "}
+          <em className="font-serif text-lavender" style={{ fontStyle: "italic", fontWeight: 400, whiteSpace: "nowrap" }}>
+            {accent}
+          </em>
+          {titleB ? ` ${titleB}` : ""}
+        </h2>
+      </header>
+      {children}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* KPI cards                                                                 */
+/* ------------------------------------------------------------------------- */
+function KpiRow({ results }: { results: ProjectionResult }) {
+  const ltvHealth =
+    results.ltvCac >= 3 ? "#B93DF5" : results.ltvCac >= 1 ? "#F3BD1A" : "#F95823";
+  const roiHealth = results.roi >= 0 ? "#22c55e" : "#F95823";
+  const paybackHealth = results.paybackMonths > 0 && results.paybackMonths <= 12 ? "#898BFF" : "#F95823";
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+        <Kpi label="Ending MRR (mo 12)" value={fmtMoney(results.endingMrr)} sub={`${fmtMoney(results.arr)} ARR`} accent="#001AFF" highlight />
+        <Kpi label="New customers / mo" value={fmt(results.newCustomersPerMonth)} sub={`${fmtMoney(results.monthlySpend)} spend / mo`} accent="#898BFF" />
+        <Kpi label="Blended CAC" value={fmtMoney(results.blendedCac)} sub={`LTV ${fmtMoney(results.ltv)}`} accent="#EE3DF5" />
+        <Kpi label="LTV : CAC" value={fmtRatio(results.ltvCac)} sub={results.ltvCac >= 3 ? "Healthy" : results.ltvCac >= 1 ? "Workable" : "Underwater"} accent={ltvHealth} highlight />
+      </div>
+      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}>
+        <KpiSmall label="CAC Payback" value={results.paybackMonths > 0 ? `${results.paybackMonths.toFixed(1)} mo` : "—"} accent={paybackHealth} />
+        <KpiSmall label="12-mo Spend" value={fmtMoney(results.total12Spend)} accent="#F3BD1A" />
+        <KpiSmall label="12-mo Revenue" value={fmtMoney(results.total12Revenue)} accent="#B93DF5" />
+        <KpiSmall label="12-mo ROI" value={fmtPct(results.roi, 0)} accent={roiHealth} />
+      </div>
+    </div>
+  );
+}
+
+function Kpi({ label, value, sub, accent, highlight }: { label: string; value: string; sub: string; accent: string; highlight?: boolean }) {
+  return (
+    <div
+      className="bg-ink-soft rounded-xl ring-1-white-10"
       style={{
-        background: highlight ? "rgba(0,26,255,0.06)" : "rgba(255,255,255,0.02)",
-        borderColor: highlight ? `${accent}44` : "rgba(255,255,255,0.08)",
-        boxShadow: highlight ? `0 0 30px ${accent}22` : "none",
+        padding: "24px 26px",
+        background: highlight ? `${accent}10` : "var(--ink-soft)",
+        boxShadow: highlight ? `0 0 34px ${accent}22` : "none",
       }}
     >
-      <p style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 10 }}>
-        {label}
-      </p>
-      <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.75rem, 3vw, 2.5rem)", fontWeight: 700, color: accent, lineHeight: 1, marginBottom: 6 }}>
-        {value}
-      </p>
-      <p style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "rgba(255,255,255,0.40)" }}>
-        {sub}
-      </p>
+      <p style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 12 }}>{label}</p>
+      <p className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.9rem, 3vw, 2.4rem)", fontWeight: 700, color: accent, lineHeight: 1, marginBottom: 8 }}>{value}</p>
+      <p style={{ fontFamily: "var(--font-sans)", fontSize: 12.5, color: "rgba(255,255,255,0.42)" }}>{sub}</p>
     </div>
   );
 }
 
-function ChannelCard({ title, number, description, signups, accentColor, children }: {
-  title: string; number: string; description: string; signups: number; accentColor: string; children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(true);
+function KpiSmall({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}>
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-4 p-5 md:p-6 text-left"
-      >
-        <div className="flex items-center gap-4">
-          <span
-            className="w-8 h-8 rounded-lg grid place-items-center shrink-0 text-xs font-bold"
-            style={{ background: `${accentColor}22`, color: accentColor, fontFamily: "var(--font-display)" }}
+    <div className="rounded-xl" style={{ padding: "18px 20px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <p style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>{label}</p>
+      <p className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 700, color: accent, lineHeight: 1 }}>{value}</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* Channel row                                                               */
+/* ------------------------------------------------------------------------- */
+function ChannelRow({ channel, result, color, onChange, onRemove }: {
+  channel: Channel;
+  result: { customers: number; cac: number };
+  color: string;
+  onChange: (patch: Partial<Channel>) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div style={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.018)", padding: "20px 22px", display: "flex", flexDirection: "column", gap: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: color, boxShadow: `0 0 10px ${color}aa`, flexShrink: 0 }} />
+          <input
+            value={channel.name}
+            onChange={e => onChange({ name: e.target.value })}
+            aria-label="Channel name"
+            className="font-display text-paper"
+            style={{
+              flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none",
+              fontSize: 17, fontWeight: 600, padding: "4px 0", borderBottom: "1px solid transparent",
+              transition: "border-color var(--dur-base) var(--ease-out)",
+            }}
+            onFocus={e => (e.currentTarget.style.borderBottomColor = "rgba(0,26,255,0.6)")}
+            onBlur={e => (e.currentTarget.style.borderBottomColor = "transparent")}
+          />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+          <div style={{ textAlign: "right" }}>
+            <p className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color, lineHeight: 1 }}>{fmt(result.customers)}</p>
+            <p style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>customers/mo</p>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <p className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 700, color: "var(--paper)", lineHeight: 1 }}>{result.customers > 0 ? fmtMoney(result.cac) : "—"}</p>
+            <p style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>CAC</p>
+          </div>
+          <button
+            onClick={onRemove}
+            aria-label={`Remove ${channel.name}`}
+            className="rounded-pill"
+            style={{
+              width: 32, height: 32, display: "grid", placeItems: "center", cursor: "pointer",
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)",
+              color: "rgba(255,255,255,0.5)", flexShrink: 0,
+              transition: "all var(--dur-base) var(--ease-out)",
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(249,88,35,0.6)"; e.currentTarget.style.color = "#F95823"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
           >
-            {number}
-          </span>
-          <div>
-            <p style={{ fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 600, color: "var(--paper)", marginBottom: 2 }}>{title}</p>
-            <p style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "rgba(255,255,255,0.40)" }}>{description}</p>
-          </div>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
         </div>
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="text-right">
-            <p style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 700, color: accentColor, lineHeight: 1 }}>
-              {fmt(signups)}
-            </p>
-            <p style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>signups</p>
-          </div>
-          <svg
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-            className="w-4 h-4 transition-transform duration-200"
-            style={{ color: "rgba(255,255,255,0.35)", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </div>
-      </button>
-
-      {open && (
-        <div className="px-5 md:px-6 pb-5 md:pb-6 space-y-4 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-          <div className="pt-4 space-y-4">{children}</div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PercentInput({ label, value, onChange, max = 1.0 }: {
-  label: string; value: number; onChange: (v: number) => void; max?: number;
-}) {
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-2">
-        <label style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "rgba(255,255,255,0.55)" }}>{label}</label>
-        <span style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: "var(--paper)" }}>
-          {(value * 100).toFixed(1)}%
-        </span>
       </div>
-      <input
-        type="range"
-        min={0}
-        max={max}
-        step={0.005}
-        value={value}
-        onChange={e => onChange(parseFloat(e.target.value))}
-        className="w-full"
-      />
-    </div>
-  );
-}
 
-function NumberInput({ label, value, onChange, min, max, step, unit }: {
-  label: string; value: number; onChange: (v: number) => void;
-  min: number; max: number; step: number; unit: string;
-}) {
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-2">
-        <label style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "rgba(255,255,255,0.55)" }}>{label}</label>
-        <span style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: "var(--paper)" }}>
-          {fmt(value)} {unit}
-        </span>
+      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
+        <NumberField label="Spend / month" value={channel.monthlySpend} prefix="$" onChange={v => onChange({ monthlySpend: v })} />
+        <NumberField label="Cost / lead" value={channel.cpl} prefix="$" onChange={v => onChange({ cpl: v })} />
+        <NumberField label="Lead → customer" value={channel.convRate} suffix="%" onChange={v => onChange({ convRate: v })} />
       </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={e => onChange(parseInt(e.target.value, 10))}
-        className="w-full"
-      />
     </div>
   );
 }
 
-function DecimalInput({ label, value, onChange, min, max, step, unit }: {
-  label: string; value: number; onChange: (v: number) => void;
-  min: number; max: number; step: number; unit: string;
-}) {
+/* ------------------------------------------------------------------------- */
+/* 12-month projection chart                                                 */
+/* ------------------------------------------------------------------------- */
+function ProjectionChart({ results }: { results: ProjectionResult }) {
+  const data = results.series.map(r => ({
+    name: `M${r.month}`,
+    mrr: Math.round(r.mrr),
+    customers: Math.round(r.activeCustomers),
+    spend: Math.round(r.spend),
+  }));
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-2">
-        <label style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "rgba(255,255,255,0.55)" }}>{label}</label>
-        <span style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: "var(--paper)" }}>
-          {value.toFixed(1)} {unit}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={e => onChange(parseFloat(e.target.value))}
-        className="w-full"
-      />
+    <div style={{ height: 300, width: "100%", minWidth: 0, overflow: "hidden" }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 800, height: 300 }}>
+        <AreaChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+          <defs>
+            <linearGradient id="mrrFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#001AFF" stopOpacity={0.55} />
+              <stop offset="55%" stopColor="#B93DF5" stopOpacity={0.22} />
+              <stop offset="100%" stopColor="#B93DF5" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" />
+          <XAxis dataKey="name" axisLine={false} tickLine={false}
+            tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "var(--font-sans)" }} />
+          <YAxis axisLine={false} tickLine={false} width={56}
+            tickFormatter={(v) => fmtMoney(Number(v))}
+            tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11, fontFamily: "var(--font-sans)" }} />
+          <Tooltip
+            cursor={{ stroke: "rgba(255,255,255,0.18)" }}
+            contentStyle={{ background: "#15151d", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--paper)" }}
+            labelStyle={{ color: "rgba(255,255,255,0.55)", marginBottom: 4 }}
+            formatter={(v, name) => {
+              if (name === "mrr") return [fmtMoney(Number(v)), "MRR"];
+              return [v, name];
+            }}
+          />
+          <Area type="monotone" dataKey="mrr" stroke="#7B7DFD" strokeWidth={2.5} fill="url(#mrrFill)" />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }
 
-function FunnelWaterfall({ stages }: {
-  stages: { label: string; value: number; color: string }[];
-}) {
-  const max = stages[0].value || 1;
+/* ------------------------------------------------------------------------- */
+/* Channel breakdown bars                                                    */
+/* ------------------------------------------------------------------------- */
+function ChannelBreakdown({ results }: { results: ProjectionResult }) {
+  const max = Math.max(...results.channels.map(c => c.customers), 1);
+  if (results.channels.length === 0) {
+    return <p style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "#b3b3b3" }}>Add a channel to see the breakdown.</p>;
+  }
   return (
-    <div className="space-y-2.5">
-      {stages.map((s, i) => {
-        const pct = (s.value / max) * 100;
-        const dropPct = i > 0 ? ((stages[i - 1].value - s.value) / (stages[i - 1].value || 1)) * 100 : 0;
-        return (
-          <div key={s.label}>
-            <div className="flex justify-between items-center mb-1.5">
-              <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{s.label}</span>
-              <div className="flex items-center gap-3">
-                {i > 0 && (
-                  <span style={{ fontFamily: "var(--font-sans)", fontSize: 11, color: "rgba(255,255,255,0.30)" }}>
-                    -{dropPct.toFixed(0)}%
-                  </span>
-                )}
-                <span style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: s.color }}>{fmt(s.value)}</span>
-              </div>
-            </div>
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${pct}%`, background: s.color, boxShadow: `0 0 8px ${s.color}66` }}
-              />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function VerdictSection({ results, totalSignups, d30 }: {
-  results: ReturnType<typeof calculate>; totalSignups: number; d30: number;
-}) {
-  const rounded = Math.round(totalSignups);
-  const d30Rounded = Math.round(d30);
-
-  const insights = [
-    {
-      n: "01",
-      color: rounded >= 100 ? "#B93DF5" : "#F95823",
-      title: `${GOAL}-Signup Goal`,
-      body: rounded >= 100
-        ? `Your model projects ${fmt(totalSignups)} signups, exceeding the 100-signup goal. Strong execution across multiple channels is key to sustaining this.`
-        : `Base-case lands at ${fmt(totalSignups)} signups, below the 100-signup target. Closing the gap requires either stronger channel execution or one channel significantly outperforming benchmarks.`,
-    },
-    {
-      n: "02",
-      color: "#F3BD1A",
-      title: "Active User Reality Check",
-      body: `${GOAL} signups does not equal ${GOAL} active users. Day-30 active users under current assumptions: ${fmt(d30)}. Reframe success around D7 and D30 retained users, not raw signups.`,
-    },
-    {
-      n: "03",
-      color: "#001AFF",
-      title: "Biggest Swing Factors",
-      body: "Nico's past-client list quality is the foundation. If fewer than 100 truly warm contacts exist, the warm channel collapses. Partnerships are the only channel with 30+ signup upside from a single win.",
-    },
-    {
-      n: "04",
-      color: "#898BFF",
-      title: "Cold Email Caution",
-      body: "A 4,200-contact consumer blast will trigger deliverability problems immediately. Recommendation: run warm-up sends first, then test small cold batches of 200 to 500 with high-value content only.",
-    },
-    {
-      n: "05",
-      color: "#F95823",
-      title: "Budget Assessment",
-      body: "Sub-$1,000 is realistic for this launch scale. The real constraint is team time (4 people x 30 to 60 min/day for 2 weeks, approximately 60 hours), not money.",
-    },
-  ];
-
-  return (
-    <div className="rounded-xl border p-6 md:p-8" style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }}>
-      <span className="eyebrow mb-3 block">Honest Assessment</span>
-      <p
-        className="mb-8"
-        style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, maxWidth: "72ch" }}
-      >
-        Based on industry benchmarks from Mailchimp 2024/25, Buffer/Hootsuite 2025, Andrew Chen / Reforge consumer growth data, and Apollo/Smartlead 2025 reports.
-      </p>
-
-      <div className="space-y-5">
-        {insights.map(ins => (
-          <div key={ins.n} className="flex gap-4 md:gap-6 p-4 md:p-5 rounded-lg border" style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.01)" }}>
-            <span
-              className="shrink-0 w-8 h-8 rounded-lg grid place-items-center text-xs font-bold mt-0.5"
-              style={{ background: `${ins.color}18`, color: ins.color, fontFamily: "var(--font-display)" }}
-            >
-              {ins.n}
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {results.channels.map((c, i) => (
+        <div key={c.id}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 7 }}>
+            <span style={{ fontFamily: "var(--font-sans)", fontSize: 13.5, color: "rgba(255,255,255,0.72)" }}>{c.name}</span>
+            <span style={{ display: "flex", gap: 14, alignItems: "baseline" }}>
+              <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{c.customers > 0 ? `${fmtMoney(c.cac)} CAC` : "—"}</span>
+              <span className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: "var(--paper)", minWidth: 36, textAlign: "right" }}>{fmt(c.customers)}</span>
             </span>
+          </div>
+          <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+            <div style={{ height: "100%", borderRadius: 999, width: `${(c.customers / max) * 100}%`, background: colorFor(i), boxShadow: `0 0 10px ${colorFor(i)}66`, transition: "width var(--dur-slow) var(--ease-out)" }} />
+          </div>
+        </div>
+      ))}
+      <div style={{ height: 1, background: DIVIDER, marginTop: 4 }} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <span style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>Total / month</span>
+        <span className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, color: "var(--paper)" }}>{fmt(results.newCustomersPerMonth)}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+/* Dynamic insights                                                          */
+/* ------------------------------------------------------------------------- */
+function Insights({ results }: { results: ProjectionResult }) {
+  const active = results.channels.filter(c => c.customers > 0);
+  const best = active.length ? active.reduce((a, b) => (b.cac < a.cac ? b : a)) : null;
+  const worst = active.length ? active.reduce((a, b) => (b.cac > a.cac ? b : a)) : null;
+  const topShare = results.channels.length ? results.channels.reduce((a, b) => (b.sharePct > a.sharePct ? b : a)) : null;
+
+  const insights: { n: string; color: string; title: string; body: string }[] = [];
+
+  insights.push({
+    n: "01", color: results.ltvCac >= 3 ? "#B93DF5" : results.ltvCac >= 1 ? "#F3BD1A" : "#F95823",
+    title: "Unit economics",
+    body: results.ltvCac >= 3
+      ? `At ${fmtRatio(results.ltvCac)} LTV:CAC, every $1 of acquisition returns about ${fmtMoney(results.ltv)} in gross lifetime value per customer — healthy enough to pour fuel on.`
+      : results.ltvCac >= 1
+        ? `${fmtRatio(results.ltvCac)} LTV:CAC is workable but thin. Below the ~3× rule of thumb, scaling spend amplifies a fragile margin. Lift conversion, ARPU, or retention before pressing harder.`
+        : `${fmtRatio(results.ltvCac)} LTV:CAC means you lose money on every customer — CAC of ${fmtMoney(results.blendedCac)} exceeds the ${fmtMoney(results.ltv)} a customer is worth. Fix the funnel before adding budget.`,
+  });
+
+  insights.push({
+    n: "02", color: results.paybackMonths > 0 && results.paybackMonths <= 12 ? "#001AFF" : "#F95823",
+    title: "CAC payback",
+    body: results.paybackMonths <= 0
+      ? `No customers are being acquired, so there's nothing to pay back yet.`
+      : results.paybackMonths <= 12
+        ? `You recover the ${fmtMoney(results.blendedCac)} blended CAC in ${results.paybackMonths.toFixed(1)} months of gross margin — inside the 12-month window most early-stage budgets can carry.`
+        : `It takes ${results.paybackMonths.toFixed(1)} months to recover CAC — longer than most runways tolerate. Either cheaper acquisition or higher gross-margin ARPU is needed.`,
+  });
+
+  if (best && worst && best.id !== worst.id) {
+    insights.push({
+      n: "03", color: "#898BFF",
+      title: "Channel efficiency",
+      body: `Your cheapest customers come from ${best.name} at ${fmtMoney(best.cac)} CAC, while ${worst.name} costs ${fmtMoney(worst.cac)} — a ${fmtRatio(worst.cac / Math.max(best.cac, 1))} gap. Shifting budget toward the efficient end lowers blended CAC fast.`,
+    });
+  }
+
+  if (topShare) {
+    const conc = topShare.sharePct >= 50;
+    insights.push({
+      n: insights.length < 3 ? "03" : "04", color: conc ? "#F3BD1A" : "#EE3DF5",
+      title: conc ? "Concentration risk" : "Channel mix",
+      body: conc
+        ? `${Math.round(topShare.sharePct)}% of new customers come from ${topShare.name} alone. One channel carrying the plan is a single point of failure — diversify before it saturates.`
+        : `Your acquisition is reasonably spread, with ${topShare.name} leading at ${Math.round(topShare.sharePct)}% of new customers. No single channel is a make-or-break dependency.`,
+    });
+  }
+
+  insights.push({
+    n: String(insights.length + 1).padStart(2, "0"), color: "#001AFF",
+    title: "12-month outcome",
+    body: `On these assumptions you spend ${fmtMoney(results.total12Spend)} over the year to reach ${fmtMoney(results.endingMrr)} MRR (${fmtMoney(results.arr)} ARR). ${results.breakEvenMonth > 0
+      ? `Cumulative revenue overtakes cumulative spend in month ${results.breakEvenMonth}.`
+      : `Cumulative revenue does not overtake spend within 12 months — extend the horizon or tighten CAC.`}`,
+  });
+
+  return (
+    <div className="bg-ink-soft rounded-xl ring-1-white-10" style={{ padding: "clamp(24px, 4vw, 40px)", display: "flex", flexDirection: "column", gap: 24 }}>
+      <header style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <span className="eyebrow-block">Read-out</span>
+        <h2 className="font-display text-paper" style={{ fontSize: "clamp(24px, 2.6vw, 32px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+          The honest{" "}
+          <em className="font-serif text-lavender" style={{ fontStyle: "italic", fontWeight: 400, whiteSpace: "nowrap" }}>read-out</em>
+        </h2>
+      </header>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {insights.map(ins => (
+          <div key={ins.n} style={{ display: "flex", gap: 18, padding: "18px 20px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.012)" }}>
+            <span style={{ flexShrink: 0, width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", fontFamily: "var(--font-display)", fontSize: 12, fontWeight: 700, background: `${ins.color}1c`, color: ins.color, marginTop: 2 }}>{ins.n}</span>
             <div>
-              <p style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: "var(--paper)", marginBottom: 6 }}>{ins.title}</p>
-              <p style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1.65 }}>{ins.body}</p>
+              <p style={{ fontFamily: "var(--font-display)", fontSize: 15.5, fontWeight: 600, color: "var(--paper)", marginBottom: 6 }}>{ins.title}</p>
+              <p style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "rgba(255,255,255,0.58)", lineHeight: 1.65 }}>{ins.body}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-8 p-4 md:p-5 rounded-lg border" style={{ borderColor: "rgba(243,189,26,0.25)", background: "rgba(243,189,26,0.05)" }}>
-        <p style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>
-          <strong style={{ color: "var(--sun)", fontFamily: "var(--font-display)" }}>Bottom Line:</strong> Realistic Base case = {Math.round(results.totalSignups)} signups, {Math.round(results.activated)} activated, {d30Rounded} Day-30 actives. The plan's 100-signup goal is reachable with strong execution. The implied 100-active-user goal requires either an order of magnitude more reach or 5x to 10x better activation than benchmarks suggest.
+      <div style={{ padding: "18px 22px", borderRadius: 16, border: "1px solid rgba(0,26,255,0.28)", background: "rgba(0,26,255,0.06)" }}>
+        <p style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "rgba(255,255,255,0.72)", lineHeight: 1.65 }}>
+          <strong style={{ color: "var(--paper)", fontFamily: "var(--font-display)" }}>Bottom line: </strong>
+          {fmt(results.newCustomersPerMonth)} new customers/month at {fmtMoney(results.blendedCac)} blended CAC compounds to {fmtMoney(results.endingMrr)} MRR by month 12 — a {fmtRatio(results.ltvCac)} LTV:CAC business returning {fmtPct(results.roi, 0)} on a year of spend.
         </p>
       </div>
     </div>

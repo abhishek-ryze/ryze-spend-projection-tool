@@ -1,223 +1,237 @@
-export interface WarmEmailInputs {
-  listSize: number;
-  openRate: number;
-  ctr: number;
-  signupConv: number;
-}
+// ---------------------------------------------------------------------------
+// GTM Spend → Returns projection model
+//
+// A founder allocates monthly spend across editable marketing channels. Each
+// channel turns spend into leads (via cost-per-lead) and leads into customers
+// (via a conversion rate). Customers compound month over month against churn to
+// produce an MRR/ARR curve, and the spend feeds CAC / LTV:CAC / payback / ROI.
+// ---------------------------------------------------------------------------
 
-export interface ColdEmailInputs {
-  listSize: number;
-  deliveryRate: number;
-  openRate: number;
-  ctr: number;
-  signupConv: number;
-}
-
-export interface LinkedInInputs {
-  posts: number;
-  avgReach: number;
-  ctr: number;
-  signupConv: number;
-}
-
-export interface CommunityInputs {
-  postsSurviving: number;
-  avgViews: number;
-  ctr: number;
-  signupConv: number;
-}
-
-export interface ReferralInputs {
-  kFactor: number;
-}
-
-export interface PartnershipInputs {
-  partnersContacted: number;
-  activeRate: number;
-  signupsPerPartner: number;
-}
-
-export interface FunnelInputs {
-  activationRate: number;
-  d7Retention: number;
-  d30Retention: number;
-}
-
-export interface Assumptions {
-  warmEmail: WarmEmailInputs;
-  coldEmail: ColdEmailInputs;
-  linkedin: LinkedInInputs;
-  community: CommunityInputs;
-  referral: ReferralInputs;
-  partnership: PartnershipInputs;
-  funnel: FunnelInputs;
-}
-
-export interface ChannelResult {
+export interface Channel {
+  id: string;
   name: string;
-  signups: number;
-  steps: { label: string; value: number }[];
+  monthlySpend: number; // $ / month
+  cpl: number;          // $ cost per lead
+  convRate: number;     // % of leads that become customers (whole number, 0–100)
 }
 
-export interface ProjectionResult {
-  channels: {
-    warmEmail: ChannelResult;
-    coldEmail: ChannelResult;
-    linkedin: ChannelResult;
-    community: ChannelResult;
-    partnership: ChannelResult;
-    referral: ChannelResult;
-  };
-  subtotal: number;
-  referrals: number;
-  totalSignups: number;
-  activated: number;
-  d7: number;
-  d30: number;
-  vsGoal: number;
+export interface GlobalAssumptions {
+  arpu: number;        // $ monthly recurring revenue per customer
+  grossMargin: number; // % (whole number)
+  churnRate: number;   // % monthly logo churn (whole number)
+  spendGrowth: number; // % monthly spend growth (whole number)
+}
+
+export interface Model {
+  channels: Channel[];
+  global: GlobalAssumptions;
 }
 
 export type Scenario = "bear" | "base" | "bull";
 
-export const PRESETS: Record<Scenario, Assumptions> = {
-  bear: {
-    warmEmail:   { listSize: 150,  openRate: 0.40, ctr: 0.15, signupConv: 0.25 },
-    coldEmail:   { listSize: 4200, deliveryRate: 0.55, openRate: 0.12, ctr: 0.010, signupConv: 0.10 },
-    linkedin:    { posts: 12,  avgReach: 200, ctr: 0.005, signupConv: 0.15 },
-    community:   { postsSurviving: 4,  avgViews: 80,  ctr: 0.005, signupConv: 0.12 },
-    referral:    { kFactor: 0.08 },
-    partnership: { partnersContacted: 25, activeRate: 0.10, signupsPerPartner: 1.5 },
-    funnel:      { activationRate: 0.30, d7Retention: 0.20, d30Retention: 0.08 },
-  },
-  base: {
-    warmEmail:   { listSize: 200,  openRate: 0.50, ctr: 0.25, signupConv: 0.35 },
-    coldEmail:   { listSize: 4200, deliveryRate: 0.70, openRate: 0.20, ctr: 0.025, signupConv: 0.15 },
-    linkedin:    { posts: 16,  avgReach: 400, ctr: 0.012, signupConv: 0.25 },
-    community:   { postsSurviving: 8,  avgViews: 200, ctr: 0.010, signupConv: 0.20 },
-    referral:    { kFactor: 0.18 },
-    partnership: { partnersContacted: 25, activeRate: 0.20, signupsPerPartner: 3.0 },
-    funnel:      { activationRate: 0.45, d7Retention: 0.35, d30Retention: 0.18 },
-  },
-  bull: {
-    warmEmail:   { listSize: 300,  openRate: 0.60, ctr: 0.35, signupConv: 0.50 },
-    coldEmail:   { listSize: 4200, deliveryRate: 0.82, openRate: 0.28, ctr: 0.050, signupConv: 0.25 },
-    linkedin:    { posts: 24,  avgReach: 600, ctr: 0.020, signupConv: 0.35 },
-    community:   { postsSurviving: 14, avgViews: 400, ctr: 0.018, signupConv: 0.30 },
-    referral:    { kFactor: 0.30 },
-    partnership: { partnersContacted: 30, activeRate: 0.35, signupsPerPartner: 5.0 },
-    funnel:      { activationRate: 0.60, d7Retention: 0.50, d30Retention: 0.30 },
-  },
-};
+export const HORIZON_MONTHS = 12;
 
-export function calculate(a: Assumptions): ProjectionResult {
-  // CH1: Warm Email
-  const ch1Opens    = a.warmEmail.listSize * a.warmEmail.openRate;
-  const ch1Clicks   = ch1Opens * a.warmEmail.ctr;
-  const ch1Signups  = ch1Clicks * a.warmEmail.signupConv;
+// ----- Derived shapes -------------------------------------------------------
 
-  // CH2: Cold Email
-  const ch2Reached  = a.coldEmail.listSize * a.coldEmail.deliveryRate;
-  const ch2Opens    = ch2Reached * a.coldEmail.openRate;
-  const ch2Clicks   = ch2Opens * a.coldEmail.ctr;
-  const ch2Signups  = ch2Clicks * a.coldEmail.signupConv;
+export interface ChannelResult {
+  id: string;
+  name: string;
+  spend: number;
+  leads: number;
+  customers: number;
+  cac: number;        // $ per customer (0 when no customers)
+  sharePct: number;   // % of total new customers
+}
 
-  // CH3: LinkedIn Organic
-  const ch3Impr     = a.linkedin.posts * a.linkedin.avgReach;
-  const ch3Clicks   = ch3Impr * a.linkedin.ctr;
-  const ch3Signups  = ch3Clicks * a.linkedin.signupConv;
+export interface MonthRow {
+  month: number;
+  spend: number;
+  newCustomers: number;
+  activeCustomers: number;
+  mrr: number;
+  cumSpend: number;
+  cumRevenue: number;
+}
 
-  // CH4: Community
-  const ch4Impr     = a.community.postsSurviving * a.community.avgViews;
-  const ch4Clicks   = ch4Impr * a.community.ctr;
-  const ch4Signups  = ch4Clicks * a.community.signupConv;
+export interface ProjectionResult {
+  channels: ChannelResult[];
+  // Month-1 snapshot
+  monthlySpend: number;
+  newCustomersPerMonth: number;
+  blendedCac: number;
+  // Unit economics
+  ltv: number;
+  ltvCac: number;
+  paybackMonths: number;
+  // 12-month series + outcomes
+  series: MonthRow[];
+  endingMrr: number;
+  arr: number;
+  total12Spend: number;
+  total12Revenue: number;
+  roi: number;            // (revenue − spend) / spend over the horizon
+  breakEvenMonth: number; // first month cumRevenue ≥ cumSpend, else 0
+}
 
-  // CH6: Partnerships
-  const ch6Active   = a.partnership.partnersContacted * a.partnership.activeRate;
-  const ch6Signups  = ch6Active * a.partnership.signupsPerPartner;
+// ----- Presets --------------------------------------------------------------
 
-  const subtotal    = ch1Signups + ch2Signups + ch3Signups + ch4Signups + ch6Signups;
-  const referrals   = subtotal * a.referral.kFactor;
-  const totalSignups = subtotal + referrals;
+let _id = 0;
+const cid = () => `seed-${_id++}`;
 
-  const activated   = totalSignups * a.funnel.activationRate;
-  const d7          = activated * a.funnel.d7Retention;
-  const d30         = activated * a.funnel.d30Retention;
-
+export function newChannel(): Channel {
   return {
-    channels: {
-      warmEmail: {
-        name: "Warm Email",
-        signups: ch1Signups,
-        steps: [
-          { label: "List", value: a.warmEmail.listSize },
-          { label: "Opens", value: ch1Opens },
-          { label: "Clicks", value: ch1Clicks },
-          { label: "Signups", value: ch1Signups },
-        ],
-      },
-      coldEmail: {
-        name: "Cold Email",
-        signups: ch2Signups,
-        steps: [
-          { label: "List", value: a.coldEmail.listSize },
-          { label: "Reached", value: ch2Reached },
-          { label: "Opens", value: ch2Opens },
-          { label: "Clicks", value: ch2Clicks },
-          { label: "Signups", value: ch2Signups },
-        ],
-      },
-      linkedin: {
-        name: "LinkedIn",
-        signups: ch3Signups,
-        steps: [
-          { label: "Posts", value: a.linkedin.posts },
-          { label: "Impressions", value: ch3Impr },
-          { label: "Clicks", value: ch3Clicks },
-          { label: "Signups", value: ch3Signups },
-        ],
-      },
-      community: {
-        name: "Community",
-        signups: ch4Signups,
-        steps: [
-          { label: "Posts", value: a.community.postsSurviving },
-          { label: "Views", value: ch4Impr },
-          { label: "Clicks", value: ch4Clicks },
-          { label: "Signups", value: ch4Signups },
-        ],
-      },
-      partnership: {
-        name: "Partnerships",
-        signups: ch6Signups,
-        steps: [
-          { label: "Contacted", value: a.partnership.partnersContacted },
-          { label: "Active", value: ch6Active },
-          { label: "Signups", value: ch6Signups },
-        ],
-      },
-      referral: {
-        name: "Referrals",
-        signups: referrals,
-        steps: [
-          { label: "K-Factor", value: a.referral.kFactor },
-          { label: "Signups", value: referrals },
-        ],
-      },
-    },
-    subtotal,
-    referrals,
-    totalSignups,
-    activated,
-    d7,
-    d30,
-    vsGoal: totalSignups / 100,
+    id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `ch-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    name: "New Channel",
+    monthlySpend: 1000,
+    cpl: 30,
+    convRate: 6,
   };
 }
 
-export function fmt(n: number, decimals = 0): string {
-  return Math.round(n).toLocaleString("en-US", { maximumFractionDigits: decimals });
+export const PRESETS: Record<Scenario, Model> = {
+  bear: {
+    channels: [
+      { id: cid(), name: "Paid Search",          monthlySpend: 4000, cpl: 55, convRate: 5 },
+      { id: cid(), name: "Paid Social",          monthlySpend: 3000, cpl: 35, convRate: 3 },
+      { id: cid(), name: "Cold Email / Outbound", monthlySpend: 1500, cpl: 45, convRate: 4 },
+      { id: cid(), name: "Content & Lead Magnets", monthlySpend: 2000, cpl: 30, convRate: 4 },
+      { id: cid(), name: "Referral",             monthlySpend: 500,  cpl: 25, convRate: 8 },
+    ],
+    global: { arpu: 60, grossMargin: 70, churnRate: 7, spendGrowth: 2 },
+  },
+  base: {
+    channels: [
+      { id: cid(), name: "Paid Search",          monthlySpend: 4000, cpl: 40, convRate: 8 },
+      { id: cid(), name: "Paid Social",          monthlySpend: 3000, cpl: 25, convRate: 5 },
+      { id: cid(), name: "Cold Email / Outbound", monthlySpend: 1500, cpl: 30, convRate: 6 },
+      { id: cid(), name: "Content & Lead Magnets", monthlySpend: 2000, cpl: 20, convRate: 7 },
+      { id: cid(), name: "Referral",             monthlySpend: 500,  cpl: 15, convRate: 12 },
+    ],
+    global: { arpu: 80, grossMargin: 75, churnRate: 4, spendGrowth: 5 },
+  },
+  bull: {
+    channels: [
+      { id: cid(), name: "Paid Search",          monthlySpend: 4000, cpl: 30, convRate: 12 },
+      { id: cid(), name: "Paid Social",          monthlySpend: 3000, cpl: 18, convRate: 8 },
+      { id: cid(), name: "Cold Email / Outbound", monthlySpend: 1500, cpl: 20, convRate: 9 },
+      { id: cid(), name: "Content & Lead Magnets", monthlySpend: 2000, cpl: 14, convRate: 10 },
+      { id: cid(), name: "Referral",             monthlySpend: 500,  cpl: 10, convRate: 18 },
+    ],
+    global: { arpu: 110, grossMargin: 80, churnRate: 2, spendGrowth: 8 },
+  },
+};
+
+// Deep clone so editing a model never mutates the shared preset object.
+export function clonePreset(s: Scenario): Model {
+  const p = PRESETS[s];
+  return {
+    channels: p.channels.map((c) => ({ ...c, id: c.id })),
+    global: { ...p.global },
+  };
 }
 
-export function fmtPct(n: number): string {
-  return (n * 100).toFixed(1) + "%";
+// ----- Core calculation -----------------------------------------------------
+
+function channelCustomers(c: Channel): number {
+  if (c.cpl <= 0) return 0;
+  const leads = c.monthlySpend / c.cpl;
+  return leads * (c.convRate / 100);
+}
+
+export function calculate(model: Model): ProjectionResult {
+  const { channels, global } = model;
+  const churn = global.churnRate / 100;
+  const growth = global.spendGrowth / 100;
+  const margin = global.grossMargin / 100;
+
+  // Month-1 channel snapshot
+  const month1Customers = channels.reduce((s, c) => s + channelCustomers(c), 0);
+
+  const channelResults: ChannelResult[] = channels.map((c) => {
+    const leads = c.cpl > 0 ? c.monthlySpend / c.cpl : 0;
+    const customers = channelCustomers(c);
+    return {
+      id: c.id,
+      name: c.name,
+      spend: c.monthlySpend,
+      leads,
+      customers,
+      cac: customers > 0 ? c.monthlySpend / customers : 0,
+      sharePct: month1Customers > 0 ? (customers / month1Customers) * 100 : 0,
+    };
+  });
+
+  const monthlySpend = channels.reduce((s, c) => s + c.monthlySpend, 0);
+  const blendedCac = month1Customers > 0 ? monthlySpend / month1Customers : 0;
+
+  // Unit economics
+  const grossArpu = global.arpu * margin;
+  const ltv = churn > 0 ? grossArpu / churn : 0;
+  const ltvCac = blendedCac > 0 ? ltv / blendedCac : 0;
+  const paybackMonths = grossArpu > 0 ? blendedCac / grossArpu : 0;
+
+  // 12-month projection
+  const series: MonthRow[] = [];
+  let active = 0;
+  let cumSpend = 0;
+  let cumRevenue = 0;
+  let breakEvenMonth = 0;
+
+  for (let m = 1; m <= HORIZON_MONTHS; m++) {
+    const factor = Math.pow(1 + growth, m - 1);
+    const spend = monthlySpend * factor;
+    const newCustomers = month1Customers * factor;
+    active = active * (1 - churn) + newCustomers;
+    const mrr = active * global.arpu;
+    cumSpend += spend;
+    cumRevenue += mrr;
+    if (breakEvenMonth === 0 && cumRevenue >= cumSpend) breakEvenMonth = m;
+    series.push({ month: m, spend, newCustomers, activeCustomers: active, mrr, cumSpend, cumRevenue });
+  }
+
+  const last = series[series.length - 1];
+  const total12Spend = last.cumSpend;
+  const total12Revenue = last.cumRevenue;
+
+  return {
+    channels: channelResults,
+    monthlySpend,
+    newCustomersPerMonth: month1Customers,
+    blendedCac,
+    ltv,
+    ltvCac,
+    paybackMonths,
+    series,
+    endingMrr: last.mrr,
+    arr: last.mrr * 12,
+    total12Spend,
+    total12Revenue,
+    roi: total12Spend > 0 ? (total12Revenue - total12Spend) / total12Spend : 0,
+    breakEvenMonth,
+  };
+}
+
+// ----- Formatters -----------------------------------------------------------
+
+export function fmt(n: number, decimals = 0): string {
+  return (Number.isFinite(n) ? n : 0).toLocaleString("en-US", { maximumFractionDigits: decimals });
+}
+
+export function fmtPct(n: number, decimals = 0): string {
+  return (n * 100).toFixed(decimals) + "%";
+}
+
+export function fmtRatio(n: number): string {
+  if (!Number.isFinite(n)) return "—";
+  return n.toFixed(1) + "×";
+}
+
+// Compact money: $1,234 / $12.3k / $1.2M
+export function fmtMoney(n: number): string {
+  const v = Number.isFinite(n) ? n : 0;
+  const sign = v < 0 ? "-" : "";
+  const abs = Math.abs(v);
+  if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}M`;
+  if (abs >= 10_000) return `${sign}$${(abs / 1000).toFixed(abs >= 100_000 ? 0 : 1)}k`;
+  return `${sign}$${Math.round(abs).toLocaleString("en-US")}`;
 }
