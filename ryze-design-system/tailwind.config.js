@@ -85,7 +85,11 @@ const ryzeBlack = {
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./src/**/*.{js,ts,jsx,tsx,mdx,html}"],
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx,html}",
+  ],
   theme: {
     extend: {
       colors: {
@@ -105,6 +109,7 @@ export default {
         electric:        ryzeBlue[500],
         "electric-deep": ryzeBlue[600],
         "electric-soft": ryzeBlue[100],
+        "electric-bright": "#4D5CFF",
         lavender:        ryzeLavendar.DEFAULT,
         ember:           ryzeOrange[300],
         magenta:         ryzeMagenta.DEFAULT,

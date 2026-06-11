@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sales & Marketing Spend Projection Tool | Ryze",
-  description: "Model your go-to-market spend across 6 channels with real-time Bear, Base, and Bull scenario projections.",
+  title: "GTM Spend Projection Tool | Ryze",
+  description: "Allocate sales & marketing spend across any channel and project customers, CAC, LTV:CAC, MRR/ARR and ROI over 12 months. Built for startup founders.",
   openGraph: {
-    title: "Sales & Marketing Spend Projection Tool",
-    description: "Model your GTM spend across 6 channels with real-time Bear, Base, and Bull scenario projections.",
+    title: "GTM Spend Projection Tool",
+    description: "Turn marketing spend into customers, CAC, MRR and ROI — projected over 12 months. Built for founders sizing up go-to-market.",
     siteName: "Ryze Design Studio",
   },
 };
