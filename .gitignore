@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ryze design system source assets (tokens.css is imported, binaries served via public/)
+# Keep ryze-design-system tracked - it contains needed CSS/tokens

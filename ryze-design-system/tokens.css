@@ -1,0 +1,380 @@
+/* =====================================================================
+   Ryze Design System — drop-in CSS custom properties
+   Source: Figma "Ryze Brand / Website 2026" (file ZctsL0NVfK5HODgcFDs6zG, node 3467:1966)
+           + ryzedesigns.com live styles
+   v1.1.0
+
+   @import "ryze-design-system/tokens.css";
+   ===================================================================== */
+
+/* Instrument Serif is PRIMARY (regular + italic). Bringbold Nineties / YourBold are
+   not on Google Fonts — self-host woff2 files and override the @font-face below. */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Schibsted+Grotesk:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Mohave:wght@700;800;900&family=Gochi+Hand&display=swap');
+
+/* Self-host these for accent use — paths assumed under /fonts/. Adjust to your project. */
+@font-face {
+  font-family: "Bringbold Nineties";
+  src: url("/fonts/BringboldNineties-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "YourBold";
+  src: url("/fonts/YourBold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  /* =================================================================
+     CANONICAL RYZE COLOR RAMPS (from Figma)
+     Note: `lavendar` spelling is preserved from the Figma variable.
+     ================================================================= */
+
+  /* ryze-blue (the electric brand blue) */
+  --ryze-blue-100:  #E3E3FF;
+  --ryze-blue-200:  #B6B7FF;
+  --ryze-blue-300:  #898BFF;
+  --ryze-blue-500:  #001AFF;
+  --ryze-blue-600:  #000CA2;
+  --ryze-blue-700:  #00034D;
+  --ryze-blue-base: #001AFF;
+
+  /* ryze-lavendar */
+  --ryze-lavendar-100:  #F6EDFE;
+  --ryze-lavendar-200:  #DEBAFB;
+  --ryze-lavendar-300:  #CA84F9;
+  --ryze-lavendar-500:  #8C1CBC;
+  --ryze-lavendar-600:  #5A0E7B;
+  --ryze-lavendar-700:  #2E0440;
+  --ryze-lavendar-base: #B93DF5;
+
+  /* ryze-magenta */
+  --ryze-magenta-100:  #FEEDEF;
+  --ryze-magenta-200:  #FBBCC7;
+  --ryze-magenta-300:  #F9809B;
+  --ryze-magenta-400:  #F4256D;
+  --ryze-magenta-500:  #B4184E;
+  --ryze-magenta-600:  #770C32;
+  --ryze-magenta-700:  #400317;
+  --ryze-magenta-base: #F4256D;
+
+  /* ryze-orange */
+  --ryze-orange-100:  #FDD2CE;
+  --ryze-orange-200:  #FB9B8D;
+  --ryze-orange-300:  #F95823;
+  --ryze-orange-400:  #BC4018;
+  --ryze-orange-500:  #832A0D;
+  --ryze-orange-600:  #4E1604;
+  --ryze-orange-700:  #260701;
+  --ryze-orange-base: #F95823;
+
+  /* ryze-pink */
+  --ryze-pink-100:  #FAD2FC;
+  --ryze-pink-200:  #F494F9;
+  --ryze-pink-400:  #B725BD;
+  --ryze-pink-500:  #801784;
+  --ryze-pink-600:  #4D094F;
+  --ryze-pink-700:  #240225;
+  --ryze-pink-base: #EE3DF5;
+
+  /* ryze-yellow */
+  --ryze-yellow-100:  #FFEACB;
+  --ryze-yellow-200:  #F3BD1A;
+  --ryze-yellow-300:  #C49813;
+  --ryze-yellow-400:  #97740C;
+  --ryze-yellow-500:  #6C5206;
+  --ryze-yellow-600:  #443302;
+  --ryze-yellow-700:  #201601;
+  --ryze-yellow-base: #F3BD1A;
+
+  /* ryze-black (neutral grayscale) */
+  --ryze-black-100:  #D6D6D6;
+  --ryze-black-200:  #AFAFAF;
+  --ryze-black-300:  #898989;
+  --ryze-black-400:  #656565;
+  --ryze-black-500:  #434343;
+  --ryze-black-600:  #242424;
+  --ryze-black-700:  #000000;
+  --ryze-black-base: #000000;
+
+  /* =================================================================
+     SEMANTIC ALIASES — use these in components, not the raw ramps
+     ================================================================= */
+  --ink:             var(--ryze-black-700);   /* page bg dark */
+  --ink-soft:        var(--ryze-black-600);   /* card surface on dark */
+  --cosmos:          #020846;                  /* deep navy hero anchor */
+  --electric:        var(--ryze-blue-500);    /* primary CTA */
+  --electric-deep:   var(--ryze-blue-600);    /* pressed state */
+  --electric-soft:   var(--ryze-blue-100);    /* pill bg on light */
+  --lavender:        var(--ryze-lavendar-base);
+  --ember:           var(--ryze-orange-300);
+  --magenta:         var(--ryze-magenta-base);
+  --pink:            var(--ryze-pink-base);
+  --sun:             var(--ryze-yellow-base);
+  --cream:           #F3EFEB;                  /* warm light-mode bg */
+  --paper:           #FFFFFF;
+  --ash:             var(--ryze-black-500);   /* body on light */
+  --smoke:           var(--ryze-black-100);   /* muted on dark */
+
+  /* =================================================================
+     GRADIENTS — built from the canonical ramps
+     ================================================================= */
+  --grad-mango:    linear-gradient(160deg, #FFEACB 0%, #F3BD1A 60%, #F95823 100%);
+  --grad-lavender: linear-gradient(160deg, #F6EDFE 0%, #DEBAFB 40%, #CA84F9 100%);
+  --grad-tomato:   linear-gradient(160deg, #FB9B8D 0%, #F95823 60%, #F4256D 100%);
+  --grad-rose:     linear-gradient(160deg, #FAD2FC 0%, #F494F9 50%, #B725BD 100%);
+  --grad-sky:      linear-gradient(160deg, #E3E3FF 0%, #B6B7FF 50%, #001AFF 100%);
+  --grad-cosmos:   radial-gradient(60% 80% at 50% 0%, #000CA2 0%, #00034D 35%, #020846 60%, #000 100%);
+  --grad-electric: linear-gradient(180deg, #001AFF 0%, #000CA2 100%);
+  --grad-night:    linear-gradient(180deg, #242424 0%, #000 100%);
+  --grad-chrome:   linear-gradient(180deg, #FFFFFF 0%, #E3E3FF 35%, #898BFF 65%, #00034D 100%);
+
+  /* Title-fade gradients — tint at the BOTTOM, white at the TOP.
+     Apply with .text-title-fade (default cream) or the variants below. */
+  --grad-title-cream: linear-gradient(0deg, #EFE8D9 0%, #FFFFFF 100%);
+  --grad-title-sky:   linear-gradient(0deg, #B6B7FF 0%, #FFFFFF 100%);
+  --grad-title-rose:  linear-gradient(0deg, #F494F9 0%, #FFFFFF 100%);
+  --grad-title-sun:   linear-gradient(0deg, #F3BD1A 0%, #FFFFFF 100%);
+  --grad-title-ember: linear-gradient(0deg, #F95823 0%, #FFFFFF 100%);
+
+  /* "Let's Connect" marquee band — solid #00034D with fade-to-black at the corners.
+     Pair with the cream noise texture (marquee-pattern.png) at background-blend-mode: overlay. */
+  --cosmos-deep:        #00034D;            /* ryze-blue-700 alias used by the marquee */
+  --grad-marquee-band:  linear-gradient(90deg, #000 0%, #00034D 8%, #00034D 92%, #000 100%);
+  --shadow-marquee-inset: inset 0 0 120px -65px rgba(246, 237, 254, 0.26);
+
+  /* Italic "together." accent — vertical blue fade used inside the footer column 3
+     and inline inside H1 titles when the accent word should pop. */
+  --grad-together: linear-gradient(180deg, var(--ryze-blue-200) 23%, #585CFF 100%);
+
+  /* =================================================================
+     TYPOGRAPHY
+     PRIMARY heading font is Instrument Serif (--font-serif).
+     Schibsted Grotesk is secondary display. Inter is body.
+     The bringbold / gochi / yourbold families are RARE accents only.
+     ================================================================= */
+  --font-serif:        "Instrument Serif", "Times New Roman", serif;     /* H1s, titles, highlights */
+  --font-display:      "Schibsted Grotesk", system-ui, sans-serif;       /* section H2s, UI display */
+  --font-sans:         "Inter", "Inter Display", system-ui, sans-serif;  /* body, nav, buttons */
+  --font-chrome:       "Mohave", "Schibsted Grotesk", Impact, sans-serif;/* RYZE / FEATURED mega */
+  --font-bringbold:    "Bringbold Nineties", Impact, sans-serif;         /* RARE accent — retro */
+  --font-gochi:        "Gochi Hand", "Comic Sans MS", cursive;           /* RARE accent — handwritten */
+  --font-yourbold:     "YourBold", "Schibsted Grotesk", Impact, sans-serif;/* RARE accent — bold display */
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.375rem;
+  --text-2xl:  clamp(1.75rem, 2vw + 1rem, 2.25rem);
+  --text-3xl:  clamp(2.25rem, 3vw + 1rem, 3rem);
+  --text-4xl:  clamp(3rem,    4vw + 1rem, 4.5rem);
+  --text-5xl:  clamp(4rem,    6vw + 1rem, 7rem);
+  --text-mega: clamp(6rem,   14vw + 1rem, 18rem);
+
+  /* =================================================================
+     RADII
+     ================================================================= */
+  --r-sm:   8px;
+  --r-md:   16px;
+  --r-lg:   24px;
+  --r-xl:   32px;
+  --r-pill: 9999px;
+
+  /* =================================================================
+     GLOWS (preferred over drop shadows on dark)
+     ================================================================= */
+  --glow-electric:   0 0 40px rgba(0, 26, 255, 0.45),  0 0 120px rgba(0, 26, 255, 0.25);
+  --glow-lavender:   0 0 40px rgba(185, 61, 245, 0.40), 0 0 120px rgba(185, 61, 245, 0.20);
+  --glow-magenta:    0 0 40px rgba(244, 37, 109, 0.40), 0 0 120px rgba(244, 37, 109, 0.20);
+  --glow-ember:      0 0 30px rgba(249, 88, 35, 0.45);
+  --glow-sun:        0 0 30px rgba(243, 189, 26, 0.45);
+  --glow-soft-white: 0 8px 32px rgba(255, 255, 255, 0.08);
+  --card-lift:       0 10px 40px rgba(0, 0, 0, 0.12);
+
+  /* =================================================================
+     MOTION
+     ================================================================= */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:    200ms;
+  --dur-base:    400ms;
+  --dur-slow:    700ms;
+}
+
+/* =====================================================================
+   Utility classes (paste-and-use, no plugin needed)
+   ===================================================================== */
+
+.text-chrome {
+  background: var(--grad-chrome);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Primary H1 / title treatment — Instrument Serif with a warm cream→white fade.
+   Use directly: <h1 class="text-title">Ideas, Impact &amp; Everything Between</h1>
+   Variants: .text-title.is-sky / .is-rose / .is-sun / .is-ember change the tint. */
+.text-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  background: var(--grad-title-cream);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.text-title.is-sky   { background: var(--grad-title-sky);   -webkit-background-clip: text; background-clip: text; }
+.text-title.is-rose  { background: var(--grad-title-rose);  -webkit-background-clip: text; background-clip: text; }
+.text-title.is-sun   { background: var(--grad-title-sun);   -webkit-background-clip: text; background-clip: text; }
+.text-title.is-ember { background: var(--grad-title-ember); -webkit-background-clip: text; background-clip: text; }
+
+/* Italic accent word — same family as .text-title but italic + lavender.
+   Use INSIDE a headline: <em class="accent">together.</em> */
+.accent {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--lavender);
+  /* When inside a .text-title, override the gradient so the accent color shows */
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+/* Italic accent with the blue-fade gradient — used on the footer "together." word
+   and any inline italic emphasis that should read as electric, not lavender. */
+.text-together {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  background: var(--grad-together);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lavender);
+}
+
+.btn-electric {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 12px 24px;
+  border-radius: var(--r-sm);
+  background: var(--electric);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.btn-electric:hover {
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 12px 24px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 1.5px solid #001aff;
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: transform var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+}
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  background: rgba(0, 26, 255, 0.08);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.875rem;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+}
+
+@keyframes ryze-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee { display: flex; overflow: hidden; white-space: nowrap; }
+.marquee__track { display: flex; gap: 3rem; animation: ryze-marquee 60s linear infinite; }
+
+@keyframes ryze-float {
+  0%, 100% { transform: translateY(-6px); }
+  50%      { transform: translateY(6px); }
+}
+.float { animation: ryze-float 5s ease-in-out infinite alternate; }
+
+/* Hero ambient — slow drifting blobs + floating particles */
+@keyframes ryze-hero-drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1);     opacity: 0.45; }
+  50%      { transform: translate(20px, -16px) scale(1.08); opacity: 0.85; }
+}
+@keyframes ryze-hero-drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1);     opacity: 0.4; }
+  50%      { transform: translate(-24px, 18px) scale(1.06); opacity: 0.75; }
+}
+.hero-blob-a { animation: ryze-hero-drift-a 14s ease-in-out infinite; }
+.hero-blob-b { animation: ryze-hero-drift-b 18s ease-in-out infinite; }
+
+@keyframes ryze-particle-rise {
+  0%   { transform: translate3d(0, 0, 0);         opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translate3d(8px, -120px, 0); opacity: 0; }
+}
+.hero-particle { animation: ryze-particle-rise linear infinite; }
+
+/* Sleek transparent scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: var(--r-pill);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.32); background-clip: padding-box; }
+.bg-cream, .bg-paper {
+  scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track, .float,
+  .hero-blob-a, .hero-blob-b, .hero-particle { animation: none !important; }
+}
