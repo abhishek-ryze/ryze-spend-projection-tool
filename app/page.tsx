@@ -46,7 +46,7 @@ export default function Home() {
             >
               Project your sales &amp;<br />
               marketing{" "}
-              <em className="text-accent" style={{ whiteSpace: "nowrap" }}>returns.</em>
+              <em style={{ whiteSpace: "nowrap", fontStyle: "italic" }}>returns.</em>
             </h1>
 
             <p

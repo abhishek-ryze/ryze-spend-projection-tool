@@ -55,15 +55,13 @@ export function Card({ eyebrow, titleA, accent, action, collapsible, open = true
             className="font-display"
             style={{
               fontSize: "clamp(24px, 2.6vw, 32px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.3, paddingBottom: 2,
-              background: "linear-gradient(0deg, #DEBAFB 0%, #FFFFFF 100%)",
-              WebkitBackgroundClip: "text", backgroundClip: "text",
-              color: "transparent", WebkitTextFillColor: "transparent",
+              color: "#FFFFFF",
             }}
           >
             {titleA}{" "}
             <em
               className="font-serif"
-              style={{ fontStyle: "italic", fontWeight: 400, whiteSpace: "nowrap", color: "var(--lavender)", WebkitTextFillColor: "var(--lavender)" }}
+              style={{ fontStyle: "italic", fontWeight: 400, whiteSpace: "nowrap", color: "#FFFFFF" }}
             >
               {accent}
             </em>
