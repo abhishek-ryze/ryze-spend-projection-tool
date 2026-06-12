@@ -60,7 +60,7 @@ export default function Home() {
               <a href="#tool" className="btn-electric">Find where to spend</a>
               <div
                 className="flex items-center gap-2 rounded-pill text-sm"
-                style={{ fontFamily: "var(--font-sans)", color: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.04)", padding: "10px 18px" }}
+                style={{ fontFamily: "var(--font-sans)", color: "rgba(255,255,255,0.55)", background: "rgba(255,255,255,0.04)", padding: "10px 18px" }}
               >
                 <span className="rounded-pill" style={{ width: 8, height: 8, background: "#898BFF", boxShadow: "0 0 6px #898BFF" }} />
                 Takes 2 minutes
