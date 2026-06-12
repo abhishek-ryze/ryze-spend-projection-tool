@@ -102,11 +102,13 @@ export function Kpi({ label, value, sub, accent, highlight }: {
 }) {
   return (
     <div
-      className="bg-ink-soft rounded-xl ring-1-white-10"
+      className="bg-ink-soft rounded-xl"
       style={{
         padding: "24px 26px",
-        background: highlight ? `${BRAND}12` : "var(--ink-soft)",
-        boxShadow: highlight ? `0 0 34px ${BRAND}26` : "none",
+        background: "var(--ink-soft)",
+        boxShadow: highlight
+          ? `inset 0 0 0 1.5px ${BRAND_BRIGHT}`
+          : "inset 0 0 0 1px rgba(255,255,255,0.10)",
       }}
     >
       <p style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)", marginBottom: 12 }}>{label}</p>

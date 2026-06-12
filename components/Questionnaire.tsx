@@ -72,7 +72,6 @@ export default function Questionnaire({
                   textAlign: "left", cursor: "pointer", padding: "18px 20px",
                   background: active ? "rgba(0,26,255,0.12)" : SURFACE,
                   border: active ? `1px solid ${BRAND}` : SURFACE_BORDER,
-                  boxShadow: active ? `0 0 26px ${BRAND}33` : "none",
                   transition: "all var(--dur-base) var(--ease-out)",
                   display: "flex", flexDirection: "column", gap: 8,
                 }}
