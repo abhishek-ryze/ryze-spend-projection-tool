@@ -114,8 +114,8 @@ export default function Questionnaire({
                     className="rounded-pill"
                     style={{
                       cursor: "pointer", fontFamily: "var(--font-sans)", fontSize: 12.5, fontWeight: 600,
-                      padding: "8px 14px",
-                      lineHeight: 1,
+                      height: 30, padding: "0 14px",
+                      lineHeight: "30px",
                       display: "inline-flex", alignItems: "center", justifyContent: "center",
                       background: on ? BRAND : "transparent",
                       color: on ? "#fff" : "rgba(255,255,255,0.65)",
