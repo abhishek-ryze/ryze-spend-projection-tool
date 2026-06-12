@@ -61,7 +61,7 @@ export function Card({ eyebrow, titleA, accent, action, collapsible, open = true
             {titleA}{" "}
             <em
               className="font-serif"
-              style={{ fontStyle: "italic", fontWeight: 400, whiteSpace: "nowrap", color: "#FFFFFF" }}
+              style={{ fontStyle: "italic", fontWeight: 400, whiteSpace: "nowrap", color: "var(--lavender)" }}
             >
               {accent}
             </em>
