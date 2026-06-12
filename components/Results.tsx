@@ -187,8 +187,9 @@ function ProjectionChart({ results }: { results: ProjectionResult }) {
           <YAxis axisLine={false} tickLine={false} width={56} tickFormatter={(v) => fmtMoney(Number(v))} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "var(--font-sans)" }} />
           <Tooltip
             cursor={{ stroke: "rgba(255,255,255,0.2)" }}
-            contentStyle={{ background: "#15151d", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 12, fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--paper)" }}
-            labelStyle={{ color: "rgba(255,255,255,0.6)", marginBottom: 4 }}
+            contentStyle={{ background: "#15151d", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 14, fontFamily: "var(--font-sans)", fontSize: 15, color: "var(--paper)", padding: "12px 16px", lineHeight: 1.5 }}
+            labelStyle={{ color: "rgba(255,255,255,0.6)", marginBottom: 6, fontSize: 14, fontWeight: 600 }}
+            itemStyle={{ fontSize: 15, padding: "2px 0" }}
             formatter={(v) => [fmtMoney(Number(v ?? 0)), "MRR"]}
           />
           <Area type="monotone" dataKey="mrr" stroke={BRAND_BRIGHT} strokeWidth={2.5} fill="url(#mrrFill)" />
