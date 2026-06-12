@@ -31,7 +31,19 @@ export default function Home() {
           <div className="relative z-[2] mx-auto max-w-4xl">
             <span className="eyebrow-block mb-5">GTM Spend Projection</span>
 
-            <h1 className="text-title text-title-sky" style={{ fontSize: "clamp(2.5rem, 7vw, 6rem)", lineHeight: 1.08, paddingBottom: 4 }}>
+            <h1
+              className="text-title"
+              style={{
+                fontSize: "clamp(2.5rem, 7vw, 6rem)",
+                lineHeight: 1.08,
+                paddingBottom: 4,
+                background: "linear-gradient(0deg, #DEBAFB 0%, #FFFFFF 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
               Project your sales &amp;<br />
               marketing{" "}
               <em className="text-accent" style={{ whiteSpace: "nowrap" }}>returns.</em>

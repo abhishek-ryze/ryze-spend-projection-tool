@@ -76,7 +76,9 @@ export default function NumberField({
   }
 
   function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
-    e.target.select();
+    const el = e.target;
+    const end = el.value.length;
+    requestAnimationFrame(() => el.setSelectionRange(end, end));
   }
 
   function handleBlur() {

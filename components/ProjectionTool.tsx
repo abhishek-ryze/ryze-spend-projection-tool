@@ -4,7 +4,7 @@ import Questionnaire from "@/components/Questionnaire";
 import Results from "@/components/Results";
 import {
   Model, Stage, Channel,
-  newModel, newChannel, seedCustomers, calculate,
+  newModel, newChannel, seedChannelByName, calculate,
 } from "@/lib/calculations";
 
 type Phase = "quiz" | "results";
@@ -33,14 +33,13 @@ export default function ProjectionTool() {
     setModel(prev => ({ ...prev, channels: prev.channels.filter(c => c.id !== id) }));
   }, []);
 
-  // Pre-launch: toggle a benchmark channel on/off by name.
+  // Toggle a benchmark channel on/off by name. Seeding behavior depends on stage:
+  // pre-launch fills in expected customers from the benchmark CAC; post/established start at 0.
   const toggleBenchmark = useCallback((name: string) => {
     setModel(prev => {
       const exists = prev.channels.find(c => c.name === name);
       if (exists) return { ...prev, channels: prev.channels.filter(c => c.id !== exists.id) };
-      const spend = 2000;
-      const seeded: Channel = { id: crypto.randomUUID?.() ?? `${name}-${Date.now()}`, name, monthlySpend: spend, customers: seedCustomers(name, spend) };
-      return { ...prev, channels: [...prev.channels, seeded] };
+      return { ...prev, channels: [...prev.channels, seedChannelByName(name, prev.stage)] };
     });
   }, []);
 

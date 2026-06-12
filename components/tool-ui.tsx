@@ -142,19 +142,12 @@ export function ChannelEditor({ channel, mode, onChange, onRemove }: {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
           <span style={{ width: 9, height: 9, borderRadius: 999, background: PURPLE, boxShadow: `0 0 10px ${PURPLE}88`, flexShrink: 0 }} />
-          <input
-            value={channel.name}
-            onChange={e => onChange({ name: e.target.value })}
-            aria-label="Channel name"
+          <span
             className="font-display text-paper"
-            style={{
-              flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none",
-              fontSize: 17, fontWeight: 600, padding: "4px 0", borderBottom: "1px solid transparent",
-              transition: "border-color var(--dur-base) var(--ease-out)",
-            }}
-            onFocus={e => (e.currentTarget.style.borderBottomColor = "rgba(0,26,255,0.6)")}
-            onBlur={e => (e.currentTarget.style.borderBottomColor = "transparent")}
-          />
+            style={{ flex: 1, minWidth: 0, fontSize: 17, fontWeight: 600, padding: "4px 0" }}
+          >
+            {channel.name}
+          </span>
         </div>
         {onRemove && (
           <button
@@ -177,12 +170,21 @@ export function ChannelEditor({ channel, mode, onChange, onRemove }: {
       </div>
 
       <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
-        <NumberField label="Spend / month" value={channel.monthlySpend} prefix="$" onChange={onSpend} />
         <NumberField
-          label={mode === "pre" ? "Est. customers / mo" : "Paying customers / mo"}
+          label="How much do you spend here each month?"
+          value={channel.monthlySpend}
+          prefix="$"
+          onChange={onSpend}
+        />
+        <NumberField
+          label="How many paying customers does it bring each month?"
           value={channel.customers}
           onChange={v => onChange({ customers: v })}
-          hint={mode === "pre" && bench ? `Estimated from ~${fmtMoney(bench.cac)} CAC. Adjust if you expect better.` : undefined}
+          hint={
+            mode === "pre" && bench
+              ? `Estimated from ~${fmtMoney(bench.cac)} per customer. Override if you expect better.`
+              : "Count the new paying customers this channel brought last month."
+          }
         />
       </div>
 

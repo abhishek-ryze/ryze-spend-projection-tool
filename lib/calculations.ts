@@ -53,6 +53,15 @@ export const CHANNEL_BENCHMARKS: Benchmark[] = [
   { name: "Events",               cac: 400, blurb: "Expensive per head, strong for enterprise and brand." },
 ];
 
+// Plain-English example of what a typical $2,000 budget buys on this channel,
+// derived from the benchmark CAC so the two numbers stay in sync.
+export function benchmarkExample(name: string, exampleSpend = 2000): string {
+  const b = benchmarkFor(name);
+  if (!b || b.cac <= 0) return "";
+  const customers = Math.max(1, Math.round(exampleSpend / b.cac));
+  return `Roughly $${exampleSpend.toLocaleString("en-US")} ≈ ${customers} paying customers/mo.`;
+}
+
 export function benchmarkFor(name: string): Benchmark | undefined {
   return CHANNEL_BENCHMARKS.find(b => b.name.toLowerCase() === name.toLowerCase());
 }
@@ -128,6 +137,17 @@ export function seedCustomers(name: string, monthlySpend: number): number {
   const b = benchmarkFor(name);
   if (!b || b.cac <= 0) return 0;
   return Math.round(monthlySpend / b.cac);
+}
+
+// Build a channel from a benchmark name. Pre-launch seeds customers from the benchmark CAC;
+// post/established start at 0 so the founder enters real numbers.
+export function seedChannelByName(name: string, stage: Stage, spend = 2000): Channel {
+  return {
+    id: uid(),
+    name,
+    monthlySpend: spend,
+    customers: stage === "pre" ? seedCustomers(name, spend) : 0,
+  };
 }
 
 export function defaultGlobals(): GlobalAssumptions {
