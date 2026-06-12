@@ -104,7 +104,7 @@ export default function Questionnaire({
                   : "Enter what they pay per month, e.g. a $50/mo plan."
               }
             />
-            <div style={{ display: "inline-flex", gap: 6, padding: 4, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 999, alignSelf: "flex-start" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: 4, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 999, alignSelf: "flex-start" }}>
               {(["monthly", "annual"] as Cadence[]).map(c => {
                 const on = cadence === c;
                 return (
@@ -114,7 +114,9 @@ export default function Questionnaire({
                     className="rounded-pill"
                     style={{
                       cursor: "pointer", fontFamily: "var(--font-sans)", fontSize: 12.5, fontWeight: 600,
-                      padding: "6px 14px",
+                      padding: "8px 14px",
+                      lineHeight: 1,
+                      display: "inline-flex", alignItems: "center", justifyContent: "center",
                       background: on ? BRAND : "transparent",
                       color: on ? "#fff" : "rgba(255,255,255,0.65)",
                       border: "none",
