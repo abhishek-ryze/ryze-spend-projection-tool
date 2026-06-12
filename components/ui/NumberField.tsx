@@ -95,6 +95,10 @@ export default function NumberField({
           letterSpacing: "0.12em",
           textTransform: "uppercase",
           fontFamily: "var(--font-sans)",
+          lineHeight: 1.4,
+          minHeight: "2.8em",
+          display: "flex",
+          alignItems: "flex-end",
         }}
       >
         {label}
