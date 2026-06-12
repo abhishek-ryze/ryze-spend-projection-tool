@@ -230,8 +230,10 @@ export function calculate(model: Model): ProjectionResult {
     const newCustomers = month1Customers * factor;
     active = active * (1 - churn) + newCustomers;
     const mrr = active * global.arpu;
+    // Cumulative returns track gross profit so ROI and break-even use the same convention as LTV:CAC.
+    const monthGrossProfit = mrr * margin;
     cumSpend += spend;
-    cumRevenue += mrr;
+    cumRevenue += monthGrossProfit;
     if (breakEvenMonth === 0 && cumRevenue >= cumSpend) breakEvenMonth = m;
     series.push({ month: m, spend, newCustomers, activeCustomers: active, mrr, cumSpend, cumRevenue });
   }

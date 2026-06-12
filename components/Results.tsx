@@ -42,10 +42,34 @@ export default function Results({
         onToggle={() => setEditing(e => !e)}
       >
         <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
-          <NumberField label="Price / customer / mo" value={model.global.arpu} prefix="$" onChange={v => onGlobal("arpu", v)} />
-          <NumberField label="Gross margin" value={model.global.grossMargin} suffix="%" onChange={v => onGlobal("grossMargin", v)} />
-          <NumberField label="Monthly churn" value={model.global.churnRate} suffix="%" onChange={v => onGlobal("churnRate", v)} />
-          <NumberField label="Spend growth / mo" value={model.global.spendGrowth} suffix="%" onChange={v => onGlobal("spendGrowth", v)} />
+          <NumberField
+            label="Price / customer / mo"
+            value={model.global.arpu}
+            prefix="$"
+            onChange={v => onGlobal("arpu", v)}
+            info="Average monthly revenue per customer. A $50/mo plan = 50; a $1,200/yr deal = 100."
+          />
+          <NumberField
+            label="Gross margin"
+            value={model.global.grossMargin}
+            suffix="%"
+            onChange={v => onGlobal("grossMargin", v)}
+            info="Share of revenue left after the cost of serving a customer (hosting, payments, support). 70% is a typical SaaS benchmark."
+          />
+          <NumberField
+            label="Monthly churn"
+            value={model.global.churnRate}
+            suffix="%"
+            onChange={v => onGlobal("churnRate", v)}
+            info="Share of customers who cancel each month. Early SaaS usually runs 2–5%."
+          />
+          <NumberField
+            label="Spend growth / mo"
+            value={model.global.spendGrowth}
+            suffix="%"
+            onChange={v => onGlobal("spendGrowth", v)}
+            info="How much your monthly marketing budget grows each month. 0% = flat spend across the year."
+          />
         </div>
         <div style={{ height: 1, background: DIVIDER }} />
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -68,10 +92,34 @@ export default function Results({
 
       {/* KPI cards */}
       <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
-        <Kpi label="Blended CAC" value={fmtMoney(results.blendedCac)} sub={`${fmt(results.newCustomersPerMonth)} customers / mo`} />
-        <Kpi label="LTV : CAC" value={fmtRatio(results.ltvCac)} sub={results.ltvCac >= 3 ? "Healthy" : results.ltvCac >= 1 ? "Workable" : "Underwater"} accent={ltvColor(results.ltvCac)} />
-        <Kpi label="Ending MRR (mo 12)" value={fmtMoney(results.endingMrr)} sub={`${fmtMoney(results.arr)} ARR`} accent={SUPPORT} highlight />
-        <Kpi label="12-mo ROI" value={fmtPct(results.roi, 0)} sub={results.breakEvenMonth > 0 ? `Break-even mo ${results.breakEvenMonth}` : "No break-even in 12 mo"} accent={roiColor(results.roi)} />
+        <Kpi
+          label="Blended CAC"
+          value={fmtMoney(results.blendedCac)}
+          sub={`${fmt(results.newCustomersPerMonth)} customers / mo`}
+          info="Customer Acquisition Cost — total marketing spend divided by the new paying customers it brought. Lower is better."
+        />
+        <Kpi
+          label="LTV : CAC"
+          value={fmtRatio(results.ltvCac)}
+          sub={results.ltvCac >= 3 ? "Healthy" : results.ltvCac >= 1 ? "Workable" : "Underwater"}
+          accent={ltvColor(results.ltvCac)}
+          info="Lifetime gross profit per customer ÷ cost to acquire them. 3× or higher is the standard healthy line; under 1× means you lose money on every customer."
+        />
+        <Kpi
+          label="Ending MRR (mo 12)"
+          value={fmtMoney(results.endingMrr)}
+          sub={`${fmtMoney(results.arr)} ARR`}
+          accent={SUPPORT}
+          highlight
+          info="Monthly Recurring Revenue you'd be running at by the end of month 12 if spend and conversion stay roughly the same. ARR = MRR × 12."
+        />
+        <Kpi
+          label="12-mo ROI"
+          value={fmtPct(results.roi, 0)}
+          sub={results.breakEvenMonth > 0 ? `Break-even mo ${results.breakEvenMonth}` : "No break-even in 12 mo"}
+          accent={roiColor(results.roi)}
+          info="Gross profit earned over 12 months minus what you spent, divided by what you spent. Positive = you make more than you spend; negative = you're investing ahead of returns."
+        />
       </div>
 
       {/* Where to spend — the headline answer */}

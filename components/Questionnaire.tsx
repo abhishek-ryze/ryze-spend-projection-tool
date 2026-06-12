@@ -88,7 +88,30 @@ export default function Questionnaire({
       </Card>
 
       {/* Step 2 — Business basics */}
-      <Card eyebrow="Step 2" titleA="What a customer" accent="is worth">
+      <Card
+        eyebrow="Step 2"
+        titleA={isPre ? "What you'll charge a customer" : "What a customer"}
+        accent={isPre ? "to start" : "is worth"}
+      >
+        {isPre && (
+          <div
+            style={{
+              padding: "14px 18px",
+              borderRadius: 12,
+              background: SURFACE,
+              border: SURFACE_BORDER,
+              borderLeft: "2px solid var(--lavender)",
+              fontFamily: "var(--font-sans)",
+              fontSize: 13.5,
+              lineHeight: 1.6,
+              color: "rgba(255,255,255,0.72)",
+            }}
+          >
+            You won&rsquo;t really know your gross margin or monthly churn until you have customers. We&rsquo;ve
+            prefilled SaaS benchmarks (~70% margin, ~3–4% churn) so you can plan. Edit any field if you have a
+            better number.
+          </div>
+        )}
         <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
           {/* Price + cadence toggle */}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -102,6 +125,7 @@ export default function Questionnaire({
                   ? "Enter the annual contract value, e.g. $1,200/yr. We'll convert to monthly."
                   : "Enter what they pay per month, e.g. a $50/mo plan."
               }
+              info="Average monthly revenue per customer (ARPU). Stored as monthly under the hood — Annual just divides by 12."
             />
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: 4, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 999, alignSelf: "flex-start" }}>
               {(["monthly", "annual"] as Cadence[]).map(c => {
@@ -135,6 +159,7 @@ export default function Questionnaire({
             suffix="%"
             onChange={v => onGlobal("grossMargin", v)}
             hint="After hosting, payments, and the people who deliver the service. Not sure? 70% is typical for software."
+            info="Gross margin — the share of revenue you keep after the cost of serving a customer. Drives LTV and how fast you recover CAC."
           />
           <NumberField
             label="Out of 100 customers, how many cancel each month?"
@@ -142,6 +167,7 @@ export default function Questionnaire({
             suffix="%"
             onChange={v => onGlobal("churnRate", v)}
             hint="A normal SaaS range is 2–5. We multiply this each month to project who stays."
+            info="Monthly churn rate. Higher churn shrinks LTV fast — at 5% churn, a customer stays roughly 20 months on average."
           />
         </div>
       </Card>

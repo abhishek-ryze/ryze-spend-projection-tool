@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import InfoTip from "@/components/ui/InfoTip";
 
 type Props = {
   label: string;
@@ -11,6 +12,7 @@ type Props = {
   step?: number;
   min?: number;
   hint?: string;
+  info?: string;
 };
 
 function fmt(n: number) {
@@ -25,6 +27,7 @@ export default function NumberField({
   suffix,
   min,
   hint,
+  info,
 }: Props) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -99,9 +102,11 @@ export default function NumberField({
           minHeight: "2.8em",
           display: "flex",
           alignItems: "flex-end",
+          gap: 6,
         }}
       >
         {label}
+        {info && <InfoTip text={info} />}
       </span>
 
       <div

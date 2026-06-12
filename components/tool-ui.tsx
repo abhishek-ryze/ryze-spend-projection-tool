@@ -1,5 +1,6 @@
 "use client";
 import NumberField from "@/components/ui/NumberField";
+import InfoTip from "@/components/ui/InfoTip";
 import { Channel, seedCustomers, benchmarkFor, fmtMoney } from "@/lib/calculations";
 
 /* ---------------------------------------------------------------------------
@@ -97,8 +98,8 @@ function Chevron({ open }: { open?: boolean }) {
 /* ---------------------------------------------------------------------------
    KPI tile
 --------------------------------------------------------------------------- */
-export function Kpi({ label, value, sub, accent, highlight }: {
-  label: string; value: string; sub: string; accent?: string; highlight?: boolean;
+export function Kpi({ label, value, sub, accent, highlight, info }: {
+  label: string; value: string; sub: string; accent?: string; highlight?: boolean; info?: string;
 }) {
   return (
     <div
@@ -111,12 +112,16 @@ export function Kpi({ label, value, sub, accent, highlight }: {
           : "inset 0 0 0 1px rgba(255,255,255,0.10)",
       }}
     >
-      <p style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)", marginBottom: 12 }}>{label}</p>
+      <p style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)", marginBottom: 12 }}>
+        {label}
+        {info && <InfoTip text={info} />}
+      </p>
       <p className="tabular" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.9rem, 3vw, 2.4rem)", fontWeight: 700, color: accent ?? "var(--paper)", lineHeight: 1, marginBottom: 8 }}>{value}</p>
       <p style={{ fontFamily: "var(--font-sans)", fontSize: 12.5, color: "rgba(255,255,255,0.55)" }}>{sub}</p>
     </div>
   );
 }
+
 
 /* ---------------------------------------------------------------------------
    Channel editor row — used in the questionnaire and in the results quick-edit.
