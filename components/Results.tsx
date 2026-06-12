@@ -27,40 +27,44 @@ export default function Results({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* Top bar: restart + adjust */}
+      {/* Top bar */}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, flexWrap: "wrap" }}>
-        <PillAction label={editing ? "Hide inputs" : "Adjust inputs"} onClick={() => setEditing(e => !e)} />
         <PillAction label="Start over" onClick={onRestart} />
       </div>
 
-      {/* Quick-edit panel */}
-      {editing && (
-        <Card eyebrow="Adjust" titleA="Tweak your" accent="numbers">
-          <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
-            <NumberField label="Price / customer / mo" value={model.global.arpu} prefix="$" onChange={v => onGlobal("arpu", v)} />
-            <NumberField label="Gross margin" value={model.global.grossMargin} suffix="%" onChange={v => onGlobal("grossMargin", v)} />
-            <NumberField label="Monthly churn" value={model.global.churnRate} suffix="%" onChange={v => onGlobal("churnRate", v)} />
-            <NumberField label="Spend growth / mo" value={model.global.spendGrowth} suffix="%" onChange={v => onGlobal("spendGrowth", v)} />
-          </div>
-          <div style={{ height: 1, background: DIVIDER }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {model.channels.map(ch => (
-              <ChannelEditor key={ch.id} channel={ch} mode={isPre ? "pre" : "actual"}
-                onChange={patch => onChannel(ch.id, patch)} onRemove={() => onRemoveChannel(ch.id)} />
-            ))}
-            <button
-              onClick={onAddChannel}
-              className="rounded-pill"
-              style={{
-                alignSelf: "flex-start", cursor: "pointer", fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 600,
-                color: "var(--paper)", padding: "11px 22px", background: "rgba(0,26,255,0.14)", border: "1px solid rgba(0,26,255,0.55)",
-              }}
-            >
-              + Add channel
-            </button>
-          </div>
-        </Card>
-      )}
+      {/* Quick-edit panel — click the header to expand/collapse */}
+      <Card
+        eyebrow="Adjust"
+        titleA="Tweak your"
+        accent="numbers"
+        collapsible
+        open={editing}
+        onToggle={() => setEditing(e => !e)}
+      >
+        <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
+          <NumberField label="Price / customer / mo" value={model.global.arpu} prefix="$" onChange={v => onGlobal("arpu", v)} />
+          <NumberField label="Gross margin" value={model.global.grossMargin} suffix="%" onChange={v => onGlobal("grossMargin", v)} />
+          <NumberField label="Monthly churn" value={model.global.churnRate} suffix="%" onChange={v => onGlobal("churnRate", v)} />
+          <NumberField label="Spend growth / mo" value={model.global.spendGrowth} suffix="%" onChange={v => onGlobal("spendGrowth", v)} />
+        </div>
+        <div style={{ height: 1, background: DIVIDER }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {model.channels.map(ch => (
+            <ChannelEditor key={ch.id} channel={ch} mode={isPre ? "pre" : "actual"}
+              onChange={patch => onChannel(ch.id, patch)} onRemove={() => onRemoveChannel(ch.id)} />
+          ))}
+          <button
+            onClick={onAddChannel}
+            className="rounded-pill"
+            style={{
+              alignSelf: "flex-start", cursor: "pointer", fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 600,
+              color: "var(--paper)", padding: "11px 22px", background: "rgba(0,26,255,0.14)", border: "1px solid rgba(0,26,255,0.55)",
+            }}
+          >
+            + Add channel
+          </button>
+        </div>
+      </Card>
 
       {/* KPI cards */}
       <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
